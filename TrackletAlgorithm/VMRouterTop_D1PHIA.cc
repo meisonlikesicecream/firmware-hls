@@ -4,21 +4,18 @@
 void VMRouterTop(BXType bx,
 	// Input memories
 	// Input memories
-	const InputStubMemory<DISKPS> inputStub[numInputs],
-	const InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S],
+	const InputStubMemory<inputType> inputStub[numInputsDiskPS],
+	const InputStubMemory<inputType2> inputStubDisk2S[numInputsDisk2S],
 	// Output memories
-	AllStubMemory<DISK> allStub[maxAllCopies],
-	VMStubMEMemory<DISK, nbitsbin> meMemories[numME],
-	VMStubTEInnerMemory<DISK> teiMemories[numTEI][maxTEICopies],
-	VMStubTEOuterMemory<DISK> teoMemories[numTEO][maxTEOCopies]
+	AllStubMemory<outputType> allStub[maxAllCopies],
+	VMStubMEMemory<outputType, nbitsbin> meMemories[numME],
+	VMStubTEInnerMemory<outputType> teiMemories[numTEI][maxTEICopies],
+	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies]
 		)
 {
 
 	//////////////////////////////////
 	// Variables for that are specified with regards to the test bench
-	
-	constexpr int layer(0); // Which barrel layer number the data is coming from, 0 if not barrel
-	constexpr int disk(1); // Which disk number the data is coming from, 0 if not disk
 	
 	// Masks of which memories that are being used. The first memory is represented by the LSB
 	static const ap_uint<6> imask(0x3F); // Input memories
@@ -203,7 +200,7 @@ void VMRouterTop(BXType bx,
 // Main function
 	
 	// template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies>
-	VMRouter<DISKPS, DISK, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
+	VMRouter<inputType, outputType, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
 	(bx, finebintable, nullptr, 
 		rzbitstable, nullptr, rzbitsextratable, 
 		bendtable, nullptr, bendextratable,

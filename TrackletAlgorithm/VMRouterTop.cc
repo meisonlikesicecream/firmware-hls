@@ -3,18 +3,15 @@
 // VMRouter Top Function for layer 1, AllStub region E
 void VMRouterTop(BXType bx, 
 	// Input memories
-		const InputStubMemory<BARRELPS> inputStub[numInputs],
+		const InputStubMemory<inputType> inputStub[numInputs],
 		// Output memories
-		AllStubMemory<BARRELPS> allStub[maxAllCopies],
-		VMStubMEMemory<BARRELPS, nbitsbin> meMemories[numME],
-		VMStubTEInnerMemory<BARRELPS> teiMemories[numTEI][maxTEICopies],
+		AllStubMemory<outputType> allStub[maxAllCopies],
+		VMStubMEMemory<outputType, nbitsbin> meMemories[numME],
+		VMStubTEInnerMemory<outputType> teiMemories[numTEI][maxTEICopies],
 		VMStubTEInnerMemory<BARRELOL> olMemories[numOL][maxOLCopies]) {
 
 //////////////////////////////////
-// Variables for that are specified with regards to the test bench
-
-	constexpr int layer(1); // Which barrel layer number the data is coming from, 0 if not barrel
-	constexpr int disk(0); // Which disk number the data is coming from, 0 if not disk
+// Variables for that are specified with regards to the VMR region
 	
 	// Masks of which memories that are being used. The first memory is represented by the LSB
 	static const ap_uint<6> imask(0xF); // Input memories
@@ -50,7 +47,7 @@ void VMRouterTop(BXType bx,
 	// LUT with the Z/R bits for TE Overlap memories
 	// Only used for Layer 1 and 2, and Disk 1
 	// Indexed using z and r position bits
-	static const int rzbitsextratable[1024] =// 10 bits used for LUT
+	static const int rzbitsextratable[] =// 10 bits used for LUT
 #include "../emData/VMR/tables/VMTableInnerL1D1.tab"
 	;
 
@@ -197,7 +194,7 @@ void VMRouterTop(BXType bx,
 // Main function
 
 	// template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies>
-	VMRouter<BARRELPS, BARRELPS, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
+	VMRouter<inputType, outputType, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
 	(bx, finebintable, phicorrtable, 
 		rzbitstable, rzbitsextratable, nullptr,
 		bendtable, bendextratable, nullptr,
