@@ -528,7 +528,7 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 // MAXN - The maximum number of copies of a memory type
 template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies, int NBitsBin>
 void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[], 
-		// rzbitstables (binlookup in emulation)
+		// rzbitstables, aka binlookup in emulation
 		const int rzbitsinnertable[], const int rzbitsoverlaptable[], const int rzbitsoutertable[],
 		// bendcut tables
 		const ap_uint<1>* bendinnertable[], const ap_uint<1>* bendoverlaptable[], const ap_uint<1>* bendoutertable[],

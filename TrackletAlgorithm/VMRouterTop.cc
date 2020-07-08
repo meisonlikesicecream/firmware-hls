@@ -1,7 +1,7 @@
 #include "VMRouterTop.h"
 
 // VMRouter Top Function for layer 1, AllStub region E
-void VMRouterTop(BXType bx, 
+void VMRouterTop(BXType bx,
 	// Input memories
 		const InputStubMemory<inputType> inputStub[numInputs],
 		// Output memories
@@ -12,14 +12,14 @@ void VMRouterTop(BXType bx,
 
 //////////////////////////////////
 // Variables for that are specified with regards to the VMR region
-	
+
 	// Masks of which memories that are being used. The first memory is represented by the LSB
 	static const ap_uint<6> imask(0xF); // Input memories
 	static const ap_uint<32> memask(0x000F0000UL); // ME memories
 	static const ap_uint<32> teimask(0x000F0000UL); // TE Inner memories
 	static const ap_uint<16> olmask(0x300); // TE Inner Overlap memories
 	static const ap_uint<32> teomask(0x0); // TE Outer memories
-	
+
 	///////////////////////////
 	// Open Lookup tables
 
@@ -30,7 +30,7 @@ void VMRouterTop(BXType bx,
 #include "../emData/VMR/tables/VMR_L1PHIE_finebin.tab"
 	;
 
-	// LUT with phi corrections to project the stub to the average radius in a layer. 
+	// LUT with phi corrections to project the stub to the average radius in a layer.
 	// Only used by layers.
 	// Indexed using phi and bend bits
 	static const int phicorrtable[] =
@@ -138,9 +138,9 @@ void VMRouterTop(BXType bx,
 	ap_uint<1> tmptable4_n5[] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE20n5_vmbendcut.tab"
 	;
-					
+
 	static const ap_uint<1>* bendtable[] = {
-		tmptable1_n1, tmptable1_n2, tmptable1_n3, tmptable1_n4, tmptable1_n5, 
+		tmptable1_n1, tmptable1_n2, tmptable1_n3, tmptable1_n4, tmptable1_n5,
 		tmptable2_n1, tmptable2_n2, tmptable2_n3, tmptable2_n4, tmptable2_n5,
 		tmptable3_n1, tmptable3_n2, tmptable3_n3, tmptable3_n4, tmptable3_n5,
 		tmptable4_n1, tmptable4_n2, tmptable4_n3, tmptable4_n4, tmptable4_n5};
@@ -170,7 +170,7 @@ void VMRouterTop(BXType bx,
 
 	ap_uint<1> tmpextratable2_n3[] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ10n3_vmbendcut.tab"
-		
+
 	static const ap_uint<1>* bendextratable[] = {
 		tmpextratable1_n1, tmpextratable1_n2, tmpextratable1_n3,
 		tmpextratable2_n1, tmpextratable2_n2, tmpextratable2_n3}; // Only used for overlap
@@ -188,14 +188,21 @@ void VMRouterTop(BXType bx,
 // #pragma HLS resource variable=bendtable latency=2
 // #pragma HLS resource variable=bendextratable latency=2
 // phicorrtable and bendtable seems to be using LUTs as they relatively small?
-	
+
+// Set all outputs to registers
+#pragma HLS interface register port=allStub
+// Can't pipeline with II=1 if we set meMemories to a register
+//#pragma HLS interface register port=meMemories
+#pragma HLS interface register port=teiMemories
+#pragma HLS interface register port=olMemories
+
 
 /////////////////////////
 // Main function
 
 	// template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies>
 	VMRouter<inputType, outputType, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
-	(bx, finebintable, phicorrtable, 
+	(bx, finebintable, phicorrtable,
 		rzbitstable, rzbitsextratable, nullptr,
 		bendtable, bendextratable, nullptr,
 // Input memories
