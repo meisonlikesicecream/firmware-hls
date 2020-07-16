@@ -149,7 +149,7 @@ inline typename AllStub<InType>::ASPHI getPhiCorr(
 	auto corrval = phicorrtable[index]; // The amount we need to correct our phi
 
 	auto phicorr = phi - corrval; // the corrected phi
-	
+
 	// Check for overflow
 	if (phicorr < 0)
 		phicorr = 0; // can't be less than 0
@@ -178,21 +178,21 @@ inline ap_uint<maxvmbits> getFirstMemNumber(const ap_uint<32> mask) {
 
 // Returns a ME stub with all the values set
 template<regionType InType, regionType OutType, int Layer, int Disk>
-inline VMStubME<OutType> createStubME(const InputStub<InType> stub, 
-		const int index, const bool negdisk, const int finebintable[], 
+inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
+		const int index, const bool negdisk, const int finebintable[],
 		const int phicorrtable[], int& ivmPlus, int& ivmMinus, int& bin) {
-	
+
 	// Values from InputStub
 	auto z = stub.getZ();
 	auto r = stub.getR();
 	auto bend = stub.getBend();
 	auto phi = stub.getPhi();
 	auto phicorr = getPhiCorr<InType>(phi, r, bend, phicorrtable); // Corrected phi, i.e. phi at nominal radius (what about disks?)
-	
+
 	int nrbits = r.length(); // Number of bits for r
 	int nzbits = z.length(); // Number of bits for z
 	int nbendbits = bend.length(); // Number of bits for bend
-	
+
 	// Some variables
 	constexpr int nbitszfinebintable =
 			(Layer) ? nbitszfinebintablelayer : nbitszfinebintabledisk; // Number of MSBs of z used in finebintable
@@ -207,18 +207,18 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
 	static const ap_ufixed<maxvmbits, maxvmbits-1> d_me = ntotvmme / 32.0;
-	
-	
+
+
 	// Set values to VMStubME
 	VMStubME<OutType> stubme;
-	
+
 	stubme.setBend(bend);
 	stubme.setIndex(typename VMStubME<OutType>::VMSMEID(index));
-	
+
 	auto iphiRaw = iphivmRaw<InType>(phicorr); // Top 5 bits of phi
 	auto iphiRawPlus = iphivmRawPlus<InType>(phicorr); // Top 5 bits of phi after adding a small number
 	auto iphiRawMinus = iphivmRawMinus<InType>(phicorr); // Top 5 bits of phi after subtracting a small number
-	
+
 	int ivm = iphiRaw * d_me; // The VM number
 	ivmPlus = iphiRawPlus * d_me;
 	ivmMinus = iphiRawMinus * d_me;
@@ -266,34 +266,34 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 	stubme.setFineZ(rzfine);
 
 	assert(rzfine >= 0);
-	
+
 	return stubme;
 };
 
 
 // Returns a TE Inner stub with all the values set
 template<regionType InType, regionType OutType, int Layer, int Disk>
-inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub, 
-		const int index, const bool negdisk, const int rzbitsinnertable[], 
+inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
+		const int index, const bool negdisk, const int rzbitsinnertable[],
 		const int phicorrtable[], int& ivm, int& rzbits) {
-	
+
 	// Values from InputStub
 	auto z = stub.getZ();
 	auto r = stub.getR();
 	auto bend = stub.getBend();
 	auto phi = stub.getPhi();
 	auto phicorr = getPhiCorr<InType>(phi, r, bend, phicorrtable); // Corrected phi, i.e. phi at nominal radius (what about disks?)
-	
+
 	int nrbits = r.length(); // Number of bits for r
 	int nzbits = z.length(); // Number of bits for z
 	int nbendbits = bend.length(); // Number of bits for bend
-	
-	// Some variables 
+
+	// Some variables
 	constexpr auto vmbits =
 			(Layer) ? vmbitslayer[Layer - 1] : vmbitsdisk[Disk - 1]; // Number of bits for VMs
 	constexpr auto finephibits =
 			(Layer) ? nfinephibarrelinner : nfinephidiskinner; // Number of bits for finephi
-	
+
 	// Total number of VMs for TE in a whole sector
 	constexpr int ntotvmte =
 			Layer != 0 ?
@@ -302,18 +302,18 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
 	static const ap_ufixed<maxvmbits, maxvmbits-1> d_te = ntotvmte / 32.0;
-	
-	
+
+
 	// Set values to VMStubeTEInner
 	VMStubTEInner<OutType> stubte;
 
 	stubte.setBend(bend);
 	stubte.setIndex(typename VMStubTEInner<OutType>::VMSTEIID(index));
-	
+
 	auto iphiRaw = iphivmRaw<InType>(phicorr); // Top 5 bits of phi
-	
+
 	ivm = iphiRaw * d_te; // The VM number
-	
+
 	// Layer
 	if (Layer != 0) {
 
@@ -354,29 +354,29 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 		stubte.setFinePhi(
 				iphivmFineBins<InType>(phicorr, vmbits, finephibits));
 	}
-	
+
 	return stubte;
 }
 
 
 // Returns a TE Outer stub with all the values set
 template<regionType InType, regionType OutType, int Layer, int Disk>
-inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub, 
-		const int index, const bool negdisk, const int rzbitsoutertable[], 
+inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
+		const int index, const bool negdisk, const int rzbitsoutertable[],
 		const int phicorrtable[], int& ivm, int& bin) {
-	
+
 	// Values from InputStub
 	auto z = stub.getZ();
 	auto r = stub.getR();
 	auto bend = stub.getBend();
 	auto phi = stub.getPhi();
 	auto phicorr = getPhiCorr<InType>(phi, r, bend, phicorrtable); // Corrected phi, i.e. phi at nominal radius (what about disks?)
-	
+
 	int nrbits = r.length(); // Number of bits for r
 	int nzbits = z.length(); // Number of bits for z
 	int nbendbits = bend.length(); // Number of bits for bend
 
-	// Some variables 
+	// Some variables
 	constexpr auto vmbits =
 			(Layer) ? vmbitslayer[Layer - 1] : vmbitsdisk[Disk - 1]; // Number of bits for VMs
 	constexpr auto finephibits =
@@ -390,14 +390,14 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
 	static const ap_ufixed<maxvmbits, maxvmbits-1> d_te = ntotvmte / 32.0;
-	
-	
+
+
 	// Set values to VMSTubTE Outer
 	VMStubTEOuter<OutType> stubte;
 
 	stubte.setBend(bend);
 	stubte.setIndex(typename VMStubTEOuter<OutType>::VMSTEOID(index));
-	
+
 	auto iphiRaw = iphivmRaw<InType>(phicorr); // Top 5 bits of phi
 	ivm = iphiRaw * d_te; // The VM number
 
@@ -458,7 +458,7 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 		ap_uint<3> rfine = rzbits & 7;
 		stubte.setFineZ(rfine);
 	}
-	
+
 	return stubte;
 }
 
@@ -466,35 +466,35 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 
 // Returns a TE Overlap stub with all the values set
 template<regionType InType, int Layer>
-inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub, 
-		const int index, const int rzbitsoverlaptable[], 
+inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
+		const int index, const int rzbitsoverlaptable[],
 		const int phicorrtable[], int& ivm, int& rzbits) {
-	
+
 	// Values from InputStub
 	auto z = stub.getZ();
 	auto r = stub.getR();
 	auto bend = stub.getBend();
 	auto phi = stub.getPhi();
 	auto phicorr = getPhiCorr<InType>(phi, r, bend, phicorrtable); // Corrected phi, i.e. phi at nominal radius (what about disks?)
-	
+
 	int nrbits = r.length(); // Number of bits for r
 	int nzbits = z.length(); // Number of bits for z
 	int nbendbits = bend.length(); // Number of bits for bend
-	
+
 	// Some variables
 	constexpr auto ntotvmol =
 			(Layer) ? nallstubslayers[Layer - 1] * nvmteoverlaplayers[Layer - 1] : 0; // Total number of VMs for ME in a whole sector
-	
+
 	constexpr auto vmbits = (Layer) ? vmbitsoverlap[Layer - 1] : 0; // Number of bits used for VMs
-	
+
 	static const ap_ufixed<4, 3> d_ol = ntotvmol / 16.; // Some normalisation thing
-	
+
 	// Set values to Overlap stub
 	VMStubTEInner<BARRELOL> stubol;
-	
+
 	// 16 overlap vms per layer
 	auto iphiRawOl = iphivmRaw<InType>(phicorr) >> 1; // Top 4 bits of phi
-	
+
 	ivm = iphiRawOl * d_ol; // Which VM it belongs to
 
 	constexpr auto zbins = (1 << nzbitsrzbitsoverlaptable); // Number of bins in z
@@ -507,7 +507,7 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 	int rzbitsindex = zbin * rbins + rbin; // Index for rzbitsoverlaptable
 
 	rzbits = rzbitsoverlaptable[rzbitsindex];
-	
+
 	stubol.setBend(bend);
 	stubol.setIndex(typename VMStubTEInner<BARRELOL>::VMSTEIID(index));
 	stubol.setZBits(rzbits);
@@ -527,13 +527,13 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 // Layer Disk - Specifies the layer or disk number
 // MAXN - The maximum number of copies of a memory type
 template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies, int NBitsBin>
-void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[], 
+void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[],
 		// rzbitstables, aka binlookup in emulation
 		const int rzbitsinnertable[], const int rzbitsoverlaptable[], const int rzbitsoutertable[],
 		// bendcut tables
 		const ap_uint<1>* bendinnertable[], const ap_uint<1>* bendoverlaptable[], const ap_uint<1>* bendoutertable[],
 		// Input memories
-		const ap_uint<6>& imask, 
+		const ap_uint<6>& imask,
 		const InputStubMemory<InType> inputStub[],
 		const InputStubMemory<DISK2S> inputStubDisk2S[],
 		// AllStub memory
@@ -621,31 +621,31 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 			}
 		}
 	}
-	
-	
+
+
 	// Number of data in each input memory
-	
+
 	typename InputStubMemory<InType>::NEntryT ninputs[6]; // Array containing the number of inputs. Last two indices are for DISK2S
 	#pragma HLS array_partition variable=ninputs complete dim=0
-	
+
 	const typename InputStubMemory<InType>::NEntryT zero(0);
-	
+
 	int ntotal = 0; // Total number of inputs
-	
+
 	for (int i = 0; i < 6; i++) {
 		#pragma HLS UNROLL
-		if (i < 4) { 
+		if (i < 4) {
 			ninputs[i] = imask[i] != 0 ? inputStub[i].getEntries(bx) : zero;
 		} else { // For DISK2S
 			ninputs[i] = imask[i] != 0 ? inputStubDisk2S[i-4].getEntries(bx) : zero;
 		}
 		ntotal += ninputs[i];
 	}
-	
+
 	// Create variables that keep track of which memory address to read and write to
 
 	ap_uint<kNBits_MemAddr> read_addr(0); // Reading of input stubs
-	
+
 	int addrCountTEI[nvmte][MaxTEICopies]; // Writing of TE Inner stubs
 	if (teimask) {
 		#pragma HLS array_partition variable=addrCountTEI complete dim=0
@@ -672,11 +672,11 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 
 
 /////////////////////////////////////
-// Main Loop 
+// Main Loop
 
 	TOPLEVEL: for (auto i = 0; i < MAXVMROUTER; ++i) {
 #pragma HLS PIPELINE II=1
-		
+
 		// Stop processing stubs if we have gone through all data
 		if (!ntotal)
 			continue;
@@ -684,11 +684,11 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 		bool resetNext = false; // Used to reset read_addr
 		bool disk2S = false; // Used to determine if DISK2S
 		bool negdisk = false; // Used to determine if it's negative disk, the last 3 inputs memories
-		
+
 		InputStub<InType> stub;
 		InputStub<DISK2S> stubDisk2S; // Used for disks. find a better way to do this...
-		
-		// Read stub from memory in turn. 
+
+		// Read stub from memory in turn.
 		// Reading is ordered as in wiring script to pass testbench
 		if (ninputs[4]) { // For DISK2S
 			assert(Disk);
@@ -728,7 +728,7 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 			if (ninputs[3] == 0)
 				resetNext = true;
 		}
-		
+
 		--ntotal;
 
 		// Increment the read address, or reset it to zero when all stubs in a memory has been read
@@ -758,15 +758,15 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 // ME memories
 
 		if (memask != 0) {
-			
+
 			// Virtual modules to write to
 			int ivmPlus;
 			int ivmMinus;
-			
+
 			int bin; // Coarse z. The bin the stub is going to be put in, in the memory
-			
+
 			// Create the ME stub to save
-			VMStubME<OutType> stubme = (disk2S) ? 
+			VMStubME<OutType> stubme = (disk2S) ?
 					createStubME<DISK2S, OutType, Layer, Disk>(stubDisk2S, i, negdisk, finebintable, phicorrtable, ivmPlus, ivmMinus, bin) :
 					createStubME<InType, OutType, Layer, Disk>(stub, i, negdisk, finebintable, phicorrtable, ivmPlus, ivmMinus, bin);;
 
@@ -807,9 +807,9 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 
 		// No stubs for DISK2S
 		if ((teimask != 0) && (!disk2S)) {
-			
+
 			int ivm;// Which VM to write to
-			
+
 			// The z/r information bits saved for TE Inner memories.
 			// Which VMs to look at in the outer layer.
 			// Note: not the z/r coordinate for the inner stub
@@ -817,7 +817,7 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 			int rzbits;
 
 			// Create the TE Inner stub to save
-			VMStubTEInner<OutType> stubte = (disk2S) ? 
+			VMStubTEInner<OutType> stubte = (disk2S) ?
 					createStubTEInner<DISK2S, OutType, Layer, Disk>(stubDisk2S, i, negdisk, rzbitsinnertable, phicorrtable, ivm, rzbits) :
 					createStubTEInner<InType, OutType, Layer, Disk>(stub, i, negdisk, rzbitsinnertable, phicorrtable, ivm, rzbits);
 
@@ -852,12 +852,12 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 // TE Outer memories
 
 		if ((teomask != 0) && (!disk2S)) {
-			
+
 			int ivm; // The VM number
 			int bin; // Coarse z. The bin the stub is going to be put in, in the memory
-			
+
 			// Create the TE Inner stub to save
-			VMStubTEOuter<OutType> stubte = (disk2S) ? 
+			VMStubTEOuter<OutType> stubte = (disk2S) ?
 					createStubTEOuter<DISK2S, OutType, Layer, Disk>(stubDisk2S, i, negdisk, rzbitsoutertable, phicorrtable, ivm, bin) :
 					createStubTEOuter<InType, OutType, Layer, Disk>(stub, i, negdisk, rzbitsoutertable, phicorrtable, ivm, bin);
 
@@ -892,17 +892,17 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 		if (olmask != 0) {
 
 			assert(Layer == 1 || Layer == 2); // Make sure that only run layer 1 and 2
-			
+
 			int ivm; // Which VM to write to
-			
+
 			// The z/r information bits saved for TE Inner memories.
 			// Which VMs to look at in the outer layer.
 			// Note: not the z/r coordinate for the inner stub
 			// Called binlookup in emulation
 			int rzbits;
-			
+
 			// Create the TE Inner stub to save
-			VMStubTEInner<BARRELOL> stubol = (disk2S) ? 
+			VMStubTEInner<BARRELOL> stubol = (disk2S) ?
 					createStubTEOverlap<DISK2S, Layer>(stubDisk2S, i, rzbitsoverlaptable, phicorrtable, ivm, rzbits) :
 					createStubTEOverlap<InType, Layer>(stub, i, rzbitsoverlaptable, phicorrtable, ivm, rzbits);
 

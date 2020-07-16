@@ -23,9 +23,9 @@ int main()
 
   // The following are the same as maxCopies unless we are at the border of a sector
   constexpr int minTEICopies = maxTEICopies; // Minimum number of TE Inner copies
-  
+
   constexpr bool firstPhiRegion = false; // I.e. PHIA
-  constexpr bool lastPhiRegion = false; 
+  constexpr bool lastPhiRegion = false;
 
   std::string finNames[numInputs] = {"VMR_L1PHIE/InputStubs_IL_L1PHIE_PS10G_1_B_04.dat",
                       "VMR_L1PHIE/InputStubs_IL_L1PHIE_PS10G_2_B_04.dat",
@@ -79,7 +79,7 @@ int main()
 
   // AllStub
   ifstream fout_allstub[maxAllCopies];
-  
+
   for (unsigned int i = 0; i < maxAllCopies; i++) {
     bool valid = openDataFile(fout_allstub[i], allStubName + to_string(i+1) + fileEnding);
     if (not valid) return -1;
@@ -87,7 +87,7 @@ int main()
 
   // ME memories
   ifstream fout_vmstubme[numME];
-  
+
   for (unsigned int i = 0; i < numME; i++) {
     bool valid =  openDataFile(fout_vmstubme[i], meNames[i] + fileEnding);
     if (not valid) return -1;
@@ -95,7 +95,7 @@ int main()
 
   // TE Inner
 	ifstream fout_vmstubtei[numTEI][maxTEICopies];
-  
+
   for (unsigned int i = 0; i < numTEI; i++) {
     int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies;
     for (unsigned int j = 0; j < numCopies; j++) {
@@ -108,7 +108,7 @@ int main()
 
   // TE Inner Overlap
 	ifstream fout_vmstubteol[numOL][maxOLCopies];
-  
+
   for (unsigned int i = 0; i < numOL; i++) {
     for (unsigned int j = 0; j < maxOLCopies; j++) {
       bool valid = openDataFile(fout_vmstubteol[i][j], olNames[i] + to_string(j+1) + fileEnding);
@@ -161,14 +161,13 @@ int main()
       if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++;
       if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--;
     }
-    
+
     // TE Inner Overlap memories
     for (unsigned int i = 0; i < numOL; i++) {
       for (unsigned int j = 0; j < maxOLCopies; j++) {
         err += compareMemWithFile<VMStubTEInnerMemory<BARRELOL>>(olMemories[i][j], fout_vmstubteol[i][j], ievt, "VMStubTEOverlap" + to_string(i), truncation);
       }
     }
-  
   } // end of event loop
 
 	std::cerr << "Exiting with return value " << err << std::endl;

@@ -4,6 +4,7 @@
 void VMRouterTop(BXType bx,
 	// Input memories
 	// Input memories
+<<<<<<< HEAD
 	const InputStubMemory<inputType> inputStub[numInputsDiskPS],
 	const InputStubMemory<inputType2> inputStubDisk2S[numInputsDisk2S],
 	// Output memories
@@ -11,12 +12,27 @@ void VMRouterTop(BXType bx,
 	VMStubMEMemory<outputType, nbitsbin> meMemories[numME],
 	VMStubTEInnerMemory<outputType> teiMemories[numTEI][maxTEICopies],
 	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies]
+=======
+	const InputStubMemory<DISKPS> inputStub[numInputs],
+	const InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S],
+	// Output memories
+	AllStubMemory<DISK> allStub[maxAllCopies],
+	VMStubMEMemory<DISK, nbitsbin> meMemories[numME],
+	VMStubTEInnerMemory<DISK> teiMemories[numTEI][maxTEICopies],
+	VMStubTEOuterMemory<DISK> teoMemories[numTEO][maxTEOCopies]
+>>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
 		)
 {
 
 	//////////////////////////////////
 	// Variables for that are specified with regards to the test bench
 	
+<<<<<<< HEAD
+=======
+	constexpr int layer(0); // Which barrel layer number the data is coming from, 0 if not barrel
+	constexpr int disk(1); // Which disk number the data is coming from, 0 if not disk
+	
+>>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
 	// Masks of which memories that are being used. The first memory is represented by the LSB
 	static const ap_uint<6> imask(0x3F); // Input memories
 	static const ap_uint<32> memask(0x000000FFUL); // ME memories
@@ -200,7 +216,11 @@ void VMRouterTop(BXType bx,
 // Main function
 	
 	// template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies>
+<<<<<<< HEAD
 	VMRouter<inputType, outputType, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
+=======
+	VMRouter<DISKPS, DISK, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
+>>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
 	(bx, finebintable, nullptr, 
 		rzbitstable, nullptr, rzbitsextratable, 
 		bendtable, nullptr, bendextratable,

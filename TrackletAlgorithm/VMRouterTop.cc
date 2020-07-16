@@ -1,7 +1,7 @@
 #include "VMRouterTop.h"
 
 // VMRouter Top Function for layer 1, AllStub region E
-void VMRouterTop(BXType bx,
+	void VMRouterTop(BXType bx,
 	// Input memories
 		const InputStubMemory<inputType> inputStub[numInputs],
 		// Output memories
@@ -55,7 +55,7 @@ void VMRouterTop(BXType bx,
 	// LUT with bend-cuts for the TE memories
 	// The cuts are different depending on the memory version (nX)
 	// Indexed using bend bits
-// TE Memory 1
+	// TE Memory 1
 	ap_uint<1> tmptable1_n1[] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE17n1_vmbendcut.tab"
 	;
@@ -171,6 +171,7 @@ void VMRouterTop(BXType bx,
 	ap_uint<1> tmpextratable2_n3[] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ10n3_vmbendcut.tab"
 
+
 	static const ap_uint<1>* bendextratable[] = {
 		tmpextratable1_n1, tmpextratable1_n2, tmpextratable1_n3,
 		tmpextratable2_n1, tmpextratable2_n2, tmpextratable2_n3}; // Only used for overlap
@@ -189,13 +190,13 @@ void VMRouterTop(BXType bx,
 // #pragma HLS resource variable=bendextratable latency=2
 // phicorrtable and bendtable seems to be using LUTs as they relatively small?
 
+
 // Set all outputs to registers
 #pragma HLS interface register port=allStub
 // Can't pipeline with II=1 if we set meMemories to a register
 //#pragma HLS interface register port=meMemories
 #pragma HLS interface register port=teiMemories
 #pragma HLS interface register port=olMemories
-
 
 /////////////////////////
 // Main function
