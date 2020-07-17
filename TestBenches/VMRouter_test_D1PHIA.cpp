@@ -5,43 +5,41 @@
 #include <iterator>
 
 #include "FileReadUtility.h"
-#include "Constants.h"
-
-const int nevents = 100;  //number of events to run
 
 using namespace std;
 
-<<<<<<< HEAD
+const int nevents = 100;  //number of events to run
+
 // VMRouter Top Function for Disk 1, AllStub region A
-=======
-// VMRouter Top Function for Layer 6, AllStub region A
->>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
 
 int main()
 {
-  // error counts
-  int err = 0;
 
-<<<<<<< HEAD
   // Code dependent on which VMR it is.
-  
+  // Note that one also needs to change if one has TEInner/Outer and Overlap
+
   // The following are the same as maxCopies unless we are at the border of a sector
+  // Note that the testbench assumes that the difference in the number of copies
+  // between two neighbouring memories, e.g. PHIA1 and PHIA2, is at most 1
   constexpr int minTEICopies = 2; // Minimum number of TE Inner copies
-  constexpr int minTEOCopies = 3; 
-  
+  constexpr int minTEOCopies = 3;
+
   constexpr bool firstPhiRegion = true; // I.e. PHIA
   constexpr bool lastPhiRegion = false;
-  
-  std::string finNames[numInputs] = {"VMR_D1PHIA/InputStubs_IL_D1PHIA_2S_5_A_04.dat",
+
+  // Input file names
+  string finNames[numInputs] = {"VMR_D1PHIA/InputStubs_IL_D1PHIA_2S_5_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_PS10G_2_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_PS5G_4_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_neg_2S_5_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_neg_PS10G_2_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_neg_PS5G_4_A_04.dat"};
 
-  std::string allStubName = "VMR_D1PHIA/AllStubs_AS_D1PHIAn"; //Start of AllStub file name
+  // Start of AllStub file names, excluding the copy number
+  string allStubName = "VMR_D1PHIA/AllStubs_AS_D1PHIAn"; //Start of AllStub file name
 
-  std::string meNames[numME] = {"VMR_D1PHIA/VMStubs_VMSME_D1PHIA1n1",
+  // Start of MEStub file names, including copy number, i.e. n1, as they only have one copy
+  string meNames[numME] = {"VMR_D1PHIA/VMStubs_VMSME_D1PHIA1n1",
                       "VMR_D1PHIA/VMStubs_VMSME_D1PHIA2n1",
                       "VMR_D1PHIA/VMStubs_VMSME_D1PHIA3n1",
                       "VMR_D1PHIA/VMStubs_VMSME_D1PHIA4n1",
@@ -50,17 +48,19 @@ int main()
                       "VMR_D1PHIA/VMStubs_VMSME_D1PHIA7n1",
                       "VMR_D1PHIA/VMStubs_VMSME_D1PHIA8n1"};
 
-  std::string teiNames[numTEI] = {"VMR_D1PHIA/VMStubs_VMSTE_D1PHIA1n",
+  // Start of TEInnerStub file names, excluding the copy number
+  string teiNames[numTEI] = {"VMR_D1PHIA/VMStubs_VMSTE_D1PHIA1n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA2n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA3n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA4n"};
 
-  std::string teoNames[numTEO] = {"VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n",
+  // Start of TEOuter file names, excluding the copy number
+  string teoNames[numTEO] = {"VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX2n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX3n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX4n"};
 
-  std::string fileEnding = "_04.dat"; //All files ends with .dat, _04 specifies which sector
+  string fileEnding = "_04.dat"; //All files ends with .dat, _04 specifies which sector
 
 
   ///////////////////////////
@@ -78,28 +78,10 @@ int main()
   //static VMStubTEInnerMemory<BARRELOL> olMemories[1][1];
   // TE Outer memories
   static VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies];
-=======
-  ///////////////////////////
-  // input memories
-  static InputStubMemory<DISKPS> inputStub[4];
-  static InputStubMemory<DISK2S> inputStubDisk2S[2];
 
-  // output memories
-  static AllStubMemory<DISK> allStub[6];
-  // ME memories
-  static VMStubMEMemory<DISK, 4> meMemories[8];
-	// TE Inner memories
-	static VMStubTEInnerMemory<DISK> teiMemories[4][3];
-  // TE Inner Overlap memories, including copies
-  //static VMStubTEInnerMemory<BARRELOL> olMemories[1][1];
-  // TE Outer memories
-  static VMStubTEOuterMemory<DISK> teoMemories[4][5];
->>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
-  
-  
+
   ///////////////////////////
   // open input files
-<<<<<<< HEAD
     cout << "Open files..." << endl;
 
     ifstream fin_inputstub[numInputs];
@@ -114,7 +96,7 @@ int main()
 
     // AllStub
     ifstream fout_allstub[maxAllCopies];
-    
+
     for (unsigned int i = 0; i < maxAllCopies; i++) {
       bool valid = openDataFile(fout_allstub[i], allStubName + to_string(i+1) + fileEnding);
       if (not valid) return -1;
@@ -122,7 +104,7 @@ int main()
 
     // ME memories
     ifstream fout_vmstubme[numME];
-    
+
     for (unsigned int i = 0; i < numME; i++) {
       bool valid =  openDataFile(fout_vmstubme[i], meNames[i] + fileEnding);
       if (not valid) return -1;
@@ -130,7 +112,7 @@ int main()
 
     // TE Inner
   	ifstream fout_vmstubtei[numTEI][maxTEICopies];
-    
+
     for (unsigned int i = 0; i < numTEI; i++) {
       int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies;
       for (unsigned int j = 0; j < numCopies; j++) {
@@ -143,7 +125,7 @@ int main()
 
     // TE Outer
   	ifstream fout_vmstubteo[numTEO][maxTEOCopies];
-    
+
     for (unsigned int i = 0; i < numTEO; i++) {
       int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEICopies;
       for (unsigned int j = 0; j < numCopies; j++) {
@@ -154,260 +136,15 @@ int main()
       if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--;
     }
 
-
-
-  ///////////////////////////
-=======
-  cout << "Open files..." << endl;
-
-  ifstream fin_inputstub1;
-  bool validin1 = openDataFile(fin_inputstub1, "VMR_D1PHIA/InputStubs_IL_D1PHIA_2S_5_A_04.dat");
-  if (not validin1) return -1;
-
-  ifstream fin_inputstub2;
-  bool validin2 = openDataFile(fin_inputstub2, "VMR_D1PHIA/InputStubs_IL_D1PHIA_PS10G_2_A_04.dat");
-  if (not validin2) return -1;
-
-  ifstream fin_inputstub3;
-  bool validin3 = openDataFile(fin_inputstub3, "VMR_D1PHIA/InputStubs_IL_D1PHIA_PS5G_4_A_04.dat");
-  if (not validin3) return -1;
-
-  ifstream fin_inputstub4;
-  bool validin4 = openDataFile(fin_inputstub4, "VMR_D1PHIA/InputStubs_IL_D1PHIA_neg_2S_5_A_04.dat");
-  if (not validin4) return -1;
-
-  ifstream fin_inputstub5;
-  bool validin5 = openDataFile(fin_inputstub5, "VMR_D1PHIA/InputStubs_IL_D1PHIA_neg_PS10G_2_A_04.dat");
-  if (not validin5) return -1;
-
-  ifstream fin_inputstub6;
-  bool validin6 = openDataFile(fin_inputstub6, "VMR_D1PHIA/InputStubs_IL_D1PHIA_neg_PS5G_4_A_04.dat");
-  if (not validin6) return -1;
-
+  // error counts
+  int err = 0;
 
   ///////////////////////////
-  // open output files
-  
-  // AllStub
-  ifstream fout_allstub_n1;
-  bool valid_allstub_n1 = openDataFile(fout_allstub_n1, "VMR_D1PHIA/AllStubs_AS_D1PHIAn1_04.dat");
-  if (not valid_allstub_n1) return -1;
-  
-  ifstream fout_allstub_n2;
-  bool valid_allstub_n2 = openDataFile(fout_allstub_n2, "VMR_D1PHIA/AllStubs_AS_D1PHIAn2_04.dat");
-  if (not valid_allstub_n2) return -1;
-  
-  ifstream fout_allstub_n3;
-  bool valid_allstub_n3 = openDataFile(fout_allstub_n3, "VMR_D1PHIA/AllStubs_AS_D1PHIAn3_04.dat");
-  if (not valid_allstub_n3) return -1;
-  
-  ifstream fout_allstub_n4;
-  bool valid_allstub_n4 = openDataFile(fout_allstub_n4, "VMR_D1PHIA/AllStubs_AS_D1PHIAn4_04.dat");
-  if (not valid_allstub_n4) return -1;
-  
-  ifstream fout_allstub_n5;
-  bool valid_allstub_n5 = openDataFile(fout_allstub_n5, "VMR_D1PHIA/AllStubs_AS_D1PHIAn5_04.dat");
-  if (not valid_allstub_n5) return -1;
-  
-  ifstream fout_allstub_n6;
-  bool valid_allstub_n6 = openDataFile(fout_allstub_n6, "VMR_D1PHIA/AllStubs_AS_D1PHIAn6_04.dat");
-  if (not valid_allstub_n6) return -1;
-  
-  // ME memories
-  ifstream fout_vmstubme1;
-  bool valid_vmstubme1 =  openDataFile(fout_vmstubme1, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA1n1_04.dat");
-  if (not valid_vmstubme1) return -1;
-
-  ifstream fout_vmstubme2;
-  bool valid_vmstubme2 = openDataFile(fout_vmstubme2, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA2n1_04.dat");
-  if (not valid_vmstubme2) return -1;
-
-  ifstream fout_vmstubme3;
-  bool valid_vmstubme3 = openDataFile(fout_vmstubme3, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA3n1_04.dat");
-  if (not valid_vmstubme3) return -1;
-
-  ifstream fout_vmstubme4;
-  bool valid_vmstubme4 = openDataFile(fout_vmstubme4, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA4n1_04.dat");
-  if (not valid_vmstubme4) return -1;
-
-  ifstream fout_vmstubme5;
-  bool valid_vmstubme5 =  openDataFile(fout_vmstubme5, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA5n1_04.dat");
-  if (not valid_vmstubme5) return -1;
-
-  ifstream fout_vmstubme6;
-  bool valid_vmstubme6 = openDataFile(fout_vmstubme6, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA6n1_04.dat");
-  if (not valid_vmstubme6) return -1;
-
-  ifstream fout_vmstubme7;
-  bool valid_vmstubme7 = openDataFile(fout_vmstubme7, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA7n1_04.dat");
-  if (not valid_vmstubme7) return -1;
-
-  ifstream fout_vmstubme8;
-  bool valid_vmstubme8 = openDataFile(fout_vmstubme8, "VMR_D1PHIA/VMStubs_VMSME_D1PHIA8n1_04.dat");
-  if (not valid_vmstubme8) return -1;
-
-  // TE inner
-  // 1
-  ifstream fout_vmstubtei1_n1;
-  bool valid_vmstubtei1_n1 =  openDataFile(fout_vmstubtei1_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA1n1_04.dat");
-  if (not valid_vmstubtei1_n1) return -1;
-
-  ifstream fout_vmstubtei1_n2;
-  bool valid_vmstubtei1_n2 =  openDataFile(fout_vmstubtei1_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA1n2_04.dat");
-  if (not valid_vmstubtei1_n2) return -1;
-  
-  // ifstream fout_vmstubtei1_n3;
-  // bool valid_vmstubtei1_n3 =  openDataFile(fout_vmstubtei1_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA1n3_04.dat");
-  // if (not valid_vmstubtei1_n3) return -1;
-  
-  // 2
-  ifstream fout_vmstubtei2_n1;
-  bool valid_vmstubtei2_n1 = openDataFile(fout_vmstubtei2_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA2n1_04.dat");
-  if (not valid_vmstubtei2_n1) return -1;
-  
-  ifstream fout_vmstubtei2_n2;
-  bool valid_vmstubtei2_n2 = openDataFile(fout_vmstubtei2_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA2n2_04.dat");
-  if (not valid_vmstubtei2_n2) return -1;
-  
-  ifstream fout_vmstubtei2_n3;
-  bool valid_vmstubtei2_n3 = openDataFile(fout_vmstubtei2_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA2n3_04.dat");
-  if (not valid_vmstubtei2_n3) return -1;
-
-  // 3
-  ifstream fout_vmstubtei3_n1;
-  bool valid_vmstubtei3_n1 = openDataFile(fout_vmstubtei3_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA3n1_04.dat");
-  if (not valid_vmstubtei3_n1) return -1;
-
-  ifstream fout_vmstubtei3_n2;
-  bool valid_vmstubtei3_n2 = openDataFile(fout_vmstubtei3_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA3n2_04.dat");
-  if (not valid_vmstubtei3_n2) return -1;
-  
-  ifstream fout_vmstubtei3_n3;
-  bool valid_vmstubtei3_n3 = openDataFile(fout_vmstubtei3_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA3n3_04.dat");
-  if (not valid_vmstubtei3_n3) return -1;
-  
-  // 4
-  ifstream fout_vmstubtei4_n1;
-  bool valid_vmstubtei4_n1 = openDataFile(fout_vmstubtei4_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA4n1_04.dat");
-  if (not valid_vmstubtei4_n1) return -1;
-  
-  ifstream fout_vmstubtei4_n2;
-  bool valid_vmstubtei4_n2 = openDataFile(fout_vmstubtei4_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA4n2_04.dat");
-  if (not valid_vmstubtei4_n2) return -1;
-  
-  ifstream fout_vmstubtei4_n3;
-  bool valid_vmstubtei4_n3 = openDataFile(fout_vmstubtei4_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA4n3_04.dat");
-  if (not valid_vmstubtei4_n3) return -1;
-
-  // ifstream fout_vmstubtei5;
-  // bool valid_vmstubtei5 =  openDataFile(fout_vmstubtei5, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA5n1_04.dat");
-  // if (not valid_vmstubtei5) return -1;
-  //
-  // ifstream fout_vmstubtei6;
-  // bool valid_vmstubtei6 = openDataFile(fout_vmstubtei6, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA6n1_04.dat");
-  // if (not valid_vmstubtei6) return -1;
-  //
-  // ifstream fout_vmstubtei7;
-  // bool valid_vmstubtei7 = openDataFile(fout_vmstubtei7, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA7n1_04.dat");
-  // if (not valid_vmstubtei7) return -1;
-  //
-  // ifstream fout_vmstubtei8;
-  // bool valid_vmstubtei8 = openDataFile(fout_vmstubtei8, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA8n1_04.dat");
-  // if (not valid_vmstubtei8) return -1;
-
-  // TE Outer
-  // 1
-  ifstream fout_vmstubteo1_n1;
-  bool valid_vmstubteo1_n1 = openDataFile(fout_vmstubteo1_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n1_04.dat");
-  if (not valid_vmstubteo1_n1) return -1;
-
-  ifstream fout_vmstubteo1_n2;
-  bool valid_vmstubteo1_n2 = openDataFile(fout_vmstubteo1_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n2_04.dat");
-  if (not valid_vmstubteo1_n2) return -1;
-  
-  ifstream fout_vmstubteo1_n3;
-  bool valid_vmstubteo1_n3 = openDataFile(fout_vmstubteo1_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n3_04.dat");
-  if (not valid_vmstubteo1_n3) return -1;
-  
-  // ifstream fout_vmstubteo1_n4;
-  // bool valid_vmstubteo1_n4 = openDataFile(fout_vmstubteo1_n4, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n4_04.dat");
-  // if (not valid_vmstubteo1_n4) return -1;
-  
-  // ifstream fout_vmstubteo1_n5;
-  // bool valid_vmstubteo1_n5 = openDataFile(fout_vmstubteo1_n5, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n5_04.dat");
-  // if (not valid_vmstubteo1_n5) return -1;
-  
-  // 2
-  ifstream fout_vmstubteo2_n1;
-  bool valid_vmstubteo2_n1 = openDataFile(fout_vmstubteo2_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX2n1_04.dat");
-  if (not valid_vmstubteo2_n1) return -1;
-  
-  ifstream fout_vmstubteo2_n2;
-  bool valid_vmstubteo2_n2 = openDataFile(fout_vmstubteo2_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX2n2_04.dat");
-  if (not valid_vmstubteo2_n2) return -1;
-  
-  ifstream fout_vmstubteo2_n3;
-  bool valid_vmstubteo2_n3 = openDataFile(fout_vmstubteo2_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX2n3_04.dat");
-  if (not valid_vmstubteo2_n3) return -1;
-  
-  ifstream fout_vmstubteo2_n4;
-  bool valid_vmstubteo2_n4 = openDataFile(fout_vmstubteo2_n4, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX2n4_04.dat");
-  if (not valid_vmstubteo2_n4) return -1;
-  
-  // ifstream fout_vmstubteo2_n5;
-  // bool valid_vmstubteo2_n5 = openDataFile(fout_vmstubteo2_n5, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX2n5_04.dat");
-  // if (not valid_vmstubteo2_n5) return -1;
-  
-  // 3
-  ifstream fout_vmstubteo3_n1;
-  bool valid_vmstubteo3_n1 = openDataFile(fout_vmstubteo3_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX3n1_04.dat");
-  if (not valid_vmstubteo3_n1) return -1;
-  
-  ifstream fout_vmstubteo3_n2;
-  bool valid_vmstubteo3_n2 = openDataFile(fout_vmstubteo3_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX3n2_04.dat");
-  if (not valid_vmstubteo3_n2) return -1;
-  
-  ifstream fout_vmstubteo3_n3;
-  bool valid_vmstubteo3_n3 = openDataFile(fout_vmstubteo3_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX3n3_04.dat");
-  if (not valid_vmstubteo3_n3) return -1;
-  
-  ifstream fout_vmstubteo3_n4;
-  bool valid_vmstubteo3_n4 = openDataFile(fout_vmstubteo3_n4, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX3n4_04.dat");
-  if (not valid_vmstubteo3_n4) return -1;
-  
-  ifstream fout_vmstubteo3_n5;
-  bool valid_vmstubteo3_n5 = openDataFile(fout_vmstubteo3_n5, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX3n5_04.dat");
-  if (not valid_vmstubteo3_n5) return -1;
-
-  // 4
-  ifstream fout_vmstubteo4_n1;
-  bool valid_vmstubteo4_n1 = openDataFile(fout_vmstubteo4_n1, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX4n1_04.dat");
-  if (not valid_vmstubteo4_n1) return -1;
-
-  ifstream fout_vmstubteo4_n2;
-  bool valid_vmstubteo4_n2 = openDataFile(fout_vmstubteo4_n2, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX4n2_04.dat");
-  if (not valid_vmstubteo4_n2) return -1;
-  
-  ifstream fout_vmstubteo4_n3;
-  bool valid_vmstubteo4_n3 = openDataFile(fout_vmstubteo4_n3, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX4n3_04.dat");
-  if (not valid_vmstubteo4_n3) return -1;
-  
-  ifstream fout_vmstubteo4_n4;
-  bool valid_vmstubteo4_n4 = openDataFile(fout_vmstubteo4_n4, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX4n4_04.dat");
-  if (not valid_vmstubteo4_n4) return -1;
-  
-  ifstream fout_vmstubteo4_n5;
-  bool valid_vmstubteo4_n5 = openDataFile(fout_vmstubteo4_n5, "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX4n5_04.dat");
-  if (not valid_vmstubteo4_n5) return -1;
-  
-  ///////////////////////////
->>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
   // loop over events
   cout << "Start event loop ..." << endl;
   for (unsigned int ievt = 0; ievt < nevents; ++ievt) {
     cout << "Event: " << dec << ievt << endl;
 
-<<<<<<< HEAD
     int num2S = 0; // Keeps track of how many 2S modules we have written to
 
     // read event and write to memories
@@ -420,7 +157,7 @@ int main()
       }
     }
 
-    // bx
+    // bx - bunch crossing
     BXType bx = ievt;
     BXType bx_out;
 
@@ -430,6 +167,8 @@ int main()
   	);
 
     // compare the computed outputs with the expected ones
+    // add 1 to the error count per stub that is incorrect
+
     bool truncation = false;
     // AllStub
     for (unsigned int i = 0; i < numInputs; i++) {
@@ -443,127 +182,26 @@ int main()
 
     // TE Inner Memories
     for (unsigned int i = 0; i < numTEI; i++) {
-      int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies;
+      int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies; // Special case for the first phi region, PHIA
       for (unsigned int j = 0; j < numCopies; j++) {
         err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(teiMemories[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i), truncation);
       }
-      if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++;
-      if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--;
+      if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++; // Special case for the first phi region, PHIA
+      if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--; // Special case for the last phi region
     }
-    
+
     // TE Outer memories
     for (unsigned int i = 0; i < numTEO; i++) {
-      int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEICopies;
+      int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEICopies; // Special case for the first phi region, PHIA
       for (unsigned int j = 0; j < numCopies; j++) {
         err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(teoMemories[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i), truncation);
       }
-      if (firstPhiRegion && (numCopies < maxTEOCopies)) numCopies++;
-      if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--;
+      if (firstPhiRegion && (numCopies < maxTEOCopies)) numCopies++; // Special case for the first phi region, PHIA
+      if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--; // Special case for the last phi region
     }
-    
-=======
-  // read event and write to memories
-  writeMemFromFile<InputStubMemory<DISK2S>>(inputStubDisk2S[0], fin_inputstub1, ievt);
-  writeMemFromFile<InputStubMemory<DISKPS>>(inputStub[0], fin_inputstub2, ievt);
-  writeMemFromFile<InputStubMemory<DISKPS>>(inputStub[1], fin_inputstub3, ievt);
-  writeMemFromFile<InputStubMemory<DISK2S>>(inputStubDisk2S[1], fin_inputstub4, ievt);
-  writeMemFromFile<InputStubMemory<DISKPS>>(inputStub[2], fin_inputstub5, ievt);
-  writeMemFromFile<InputStubMemory<DISKPS>>(inputStub[3], fin_inputstub6, ievt);
-
-  // bx
-  BXType bx = ievt;
-  BXType bx_out;
-
-  // Unit Under Test
-  VMRouterTop(bx, inputStub, inputStubDisk2S,
-      allStub, meMemories, teiMemories, teoMemories
-	);
-
-  // compare the computed outputs with the expected ones
-  bool truncation = false;
-  // AllStub
-  err += compareMemWithFile<AllStubMemory<DISK>>(allStub[0], fout_allstub_n1, ievt, "AllStub", truncation);
-  err += compareMemWithFile<AllStubMemory<DISK>>(allStub[1], fout_allstub_n2, ievt, "AllStub", truncation);
-  err += compareMemWithFile<AllStubMemory<DISK>>(allStub[2], fout_allstub_n3, ievt, "AllStub", truncation);
-  err += compareMemWithFile<AllStubMemory<DISK>>(allStub[3], fout_allstub_n4, ievt, "AllStub", truncation);
-  err += compareMemWithFile<AllStubMemory<DISK>>(allStub[4], fout_allstub_n5, ievt, "AllStub", truncation);
-  err += compareMemWithFile<AllStubMemory<DISK>>(allStub[5], fout_allstub_n6, ievt, "AllStub", truncation);
-  
-  // VMStubME1
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[0], fout_vmstubme1, ievt,"VMStubME1", truncation);
-  
-  // VMStubME2
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[1], fout_vmstubme2, ievt,"VMStubME2", truncation);
-  
-  // VMStubME3
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[2], fout_vmstubme3, ievt,"VMStubME3", truncation);
-  
-  // VMStubME4
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[3], fout_vmstubme4, ievt,"VMStubME4", truncation);
-  
-  // VMStubME5
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[4], fout_vmstubme5, ievt,"VMStubME5", truncation);
-  
-   // VMStubME6
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[5], fout_vmstubme6, ievt,"VMStubME6", truncation);
-  
-   // VMStubME7
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[6], fout_vmstubme7, ievt,"VMStubME7", truncation);
-  
-   // VMStubME8
-  err += compareBinnedMemWithFile<VMStubMEMemory<DISK, 4>>(meMemories[7], fout_vmstubme8, ievt,"VMStubME8", truncation);
-
-
-  // TE Memories
-  //VMStubTEInner1
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[0][0], fout_vmstubtei1_n1, ievt, "VMStubTEInner1", truncation);
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[0][1], fout_vmstubtei1_n2, ievt, "VMStubTEInner1", truncation);
-  // VMStubTEInner2
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[1][0], fout_vmstubtei2_n1, ievt, "VMStubTEInner2", truncation);
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[1][1], fout_vmstubtei2_n2, ievt, "VMStubTEInner2", truncation);
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[1][2], fout_vmstubtei2_n3, ievt, "VMStubTEInner2", truncation);
-  
-  // VMStubTEInner3
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[2][0], fout_vmstubtei3_n1, ievt, "VMStubTEInner3", truncation);
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[2][1], fout_vmstubtei3_n2, ievt, "VMStubTEInner3", truncation);
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[2][2], fout_vmstubtei3_n3, ievt, "VMStubTEInner3", truncation);
-
-  // VMStubTEInner4
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[3][0], fout_vmstubtei4_n1, ievt, "VMStubTEInner4", truncation);
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[3][1], fout_vmstubtei4_n2, ievt, "VMStubTEInner4", truncation);
-  err += compareMemWithFile<VMStubTEInnerMemory<DISK>>(teiMemories[3][2], fout_vmstubtei4_n3, ievt, "VMStubTEInner4", truncation);
-
-
-  // TE Memories
-  // VMStubTEOuter1
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[0][0], fout_vmstubteo1_n1, ievt, "VMStubTEOuter1", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[0][1], fout_vmstubteo1_n2, ievt, "VMStubTEOuter1", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[0][2], fout_vmstubteo1_n3, ievt, "VMStubTEOuter1", truncation);
-
-  // VMStubTEOuter2
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[1][0], fout_vmstubteo2_n1, ievt, "VMStubTEOuter2", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[1][1], fout_vmstubteo2_n2, ievt, "VMStubTEOuter2", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[1][2], fout_vmstubteo2_n3, ievt, "VMStubTEOuter2", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[1][3], fout_vmstubteo2_n4, ievt, "VMStubTEOuter2", truncation);
-  // err += compareMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[1][4], fout_vmstubteo2_n5, ievt, "VMStubTEOuter2", truncation);
-  
-  // VMStubTEOuter3
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[2][0], fout_vmstubteo3_n1, ievt, "VMStubTEOuter3", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[2][1], fout_vmstubteo3_n2, ievt, "VMStubTEOuter3", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[2][2], fout_vmstubteo3_n3, ievt, "VMStubTEOuter3", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[2][3], fout_vmstubteo3_n4, ievt, "VMStubTEOuter3", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[2][4], fout_vmstubteo3_n5, ievt, "VMStubTEOuter3", truncation);
-  
-  // VMStubTEOuter4
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[3][0], fout_vmstubteo4_n1, ievt, "VMStubTEOuter4", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[3][1], fout_vmstubteo4_n2, ievt, "VMStubTEOuter4", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[3][2], fout_vmstubteo4_n3, ievt, "VMStubTEOuter4", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[3][3], fout_vmstubteo4_n4, ievt, "VMStubTEOuter4", truncation);
-  err += compareBinnedMemWithFile<VMStubTEOuterMemory<DISK>>(teoMemories[3][4], fout_vmstubteo4_n5, ievt, "VMStubTEOuter4", truncation);
-  
->>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
   } // end of event loop
-  std::cerr << "Exiting with return value " << err << std::endl;
+
+  cerr << "Exiting with return value " << err << endl;
   return err;
 
 }

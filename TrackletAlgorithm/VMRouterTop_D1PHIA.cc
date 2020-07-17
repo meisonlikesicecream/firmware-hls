@@ -1,10 +1,9 @@
 #include "VMRouterTop_D1PHIA.h"
 
 // VMRouter Top Function for Disk 1, AllStub region A
+
 void VMRouterTop(BXType bx,
 	// Input memories
-	// Input memories
-<<<<<<< HEAD
 	const InputStubMemory<inputType> inputStub[numInputsDiskPS],
 	const InputStubMemory<inputType2> inputStubDisk2S[numInputsDisk2S],
 	// Output memories
@@ -12,33 +11,18 @@ void VMRouterTop(BXType bx,
 	VMStubMEMemory<outputType, nbitsbin> meMemories[numME],
 	VMStubTEInnerMemory<outputType> teiMemories[numTEI][maxTEICopies],
 	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies]
-=======
-	const InputStubMemory<DISKPS> inputStub[numInputs],
-	const InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S],
-	// Output memories
-	AllStubMemory<DISK> allStub[maxAllCopies],
-	VMStubMEMemory<DISK, nbitsbin> meMemories[numME],
-	VMStubTEInnerMemory<DISK> teiMemories[numTEI][maxTEICopies],
-	VMStubTEOuterMemory<DISK> teoMemories[numTEO][maxTEOCopies]
->>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
 		)
 {
 
 	//////////////////////////////////
 	// Variables for that are specified with regards to the test bench
-	
-<<<<<<< HEAD
-=======
-	constexpr int layer(0); // Which barrel layer number the data is coming from, 0 if not barrel
-	constexpr int disk(1); // Which disk number the data is coming from, 0 if not disk
-	
->>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
+
 	// Masks of which memories that are being used. The first memory is represented by the LSB
-	static const ap_uint<6> imask(0x3F); // Input memories
-	static const ap_uint<32> memask(0x000000FFUL); // ME memories
-	static const ap_uint<32> teimask(0x0000000FUL); // TE Inner memories
-	static const ap_uint<16> olmask(0x000); // TE Inner Overlap memories
-	static const ap_uint<32> teomask(0x0000000FUL); // TE Outer memories
+	static const ap_uint<inmasksize> imask(0x3F); // Input memories
+	static const ap_uint<memasksize> memask(0x000000FFUL); // ME memories
+	static const ap_uint<teimasksize> teimask(0x0000000FUL); // TE Inner memories
+	static const ap_uint<olmasksize> olmask(0x000); // TE Inner Overlap memories
+	static const ap_uint<teomasksize> teomask(0x0000000FUL); // TE Outer memories
 
 
 	///////////////////////////
@@ -51,17 +35,17 @@ void VMRouterTop(BXType bx,
 #include "../emData/VMR/tables/VMR_D1PHIA_finebin.tab"
 	;
 
-	// LUT with phi corrections to project the stub to the nominal radius. 
+	// LUT with phi corrections to project the stub to the nominal radius.
 	// Only used by layers.
 	// Indexed using phi and bend bits
 	// 	static const int phicorrtable[] =
 	// #include "../emData/VMR/tables/VMPhiCorrL1.txt"
 	// 	;
-		
+
 	// LUT with the Z/R bits for TE memories
 	// Contain information about where in z to look for valid stub pairs
 	// Indexed using z and r position bits
-	static const int rzbitstable[2048] = // 11 bits used for LUT
+	static const int rzbitstable[] = // 11 bits used for LUT
 #include "../emData/VMR/tables/VMTableInnerD1D2.tab" // Only for Layer 1
 	;
 
@@ -84,7 +68,7 @@ void VMRouterTop(BXType bx,
 #include "../emData/VMR/tables/VMSTE_D1PHIA1n2_vmbendcut.tab"
 	;
 	ap_uint<1> tmptable1_n3[8] = {0};
-	
+
 	// TE Memory 2
 	ap_uint<1> tmptable2_n1[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA2n1_vmbendcut.tab"
@@ -95,7 +79,7 @@ void VMRouterTop(BXType bx,
 	ap_uint<1> tmptable2_n3[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA2n3_vmbendcut.tab"
 	;
-	
+
 	// TE Memory 3
 	ap_uint<1> tmptable3_n1[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA3n1_vmbendcut.tab"
@@ -117,10 +101,11 @@ void VMRouterTop(BXType bx,
 	ap_uint<1> tmptable4_n3[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA4n3_vmbendcut.tab"
 	;
-	
+
+	// Combine all the temporary tables into one big table
 	static const ap_uint<1>* bendtable[] = {
-		tmptable1_n1, tmptable1_n2, tmptable1_n3, 
-		tmptable2_n1, tmptable2_n2, tmptable2_n3, 
+		tmptable1_n1, tmptable1_n2, tmptable1_n3,
+		tmptable2_n1, tmptable2_n2, tmptable2_n3,
 		tmptable3_n1, tmptable3_n2, tmptable3_n3,
 		tmptable4_n1, tmptable4_n2, tmptable4_n3};
 
@@ -136,7 +121,7 @@ void VMRouterTop(BXType bx,
 #include "../emData/VMR/tables/VMSTE_D1PHIX1n3_vmbendcut.tab"
 	;
 	ap_uint<1> tmpextratable1_n4[8] = {0};
-	
+
 	ap_uint<1> tmpextratable1_n5[8] = {0};
 
 	// TE Overlap Memory 2
@@ -188,6 +173,7 @@ void VMRouterTop(BXType bx,
 #include "../emData/VMR/tables/VMSTE_D1PHIX4n5_vmbendcut.tab"
 	;
 
+	// Combine all the temporary extra tables into one big table
 	static const ap_uint<1>* bendextratable[] = {
 		tmpextratable1_n1, tmpextratable1_n2, tmpextratable1_n3, tmpextratable1_n4, tmpextratable1_n5,
 		tmpextratable2_n1, tmpextratable2_n2, tmpextratable2_n3, tmpextratable2_n4, tmpextratable2_n5,
@@ -214,15 +200,11 @@ void VMRouterTop(BXType bx,
 
 /////////////////////////
 // Main function
-	
+
 	// template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies>
-<<<<<<< HEAD
 	VMRouter<inputType, outputType, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
-=======
-	VMRouter<DISKPS, DISK, layer, disk,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin>
->>>>>>> 8e57c45765a9291f3f548e80387f2e0b53d59288
-	(bx, finebintable, nullptr, 
-		rzbitstable, nullptr, rzbitsextratable, 
+	(bx, finebintable, nullptr,
+		rzbitstable, nullptr, rzbitsextratable,
 		bendtable, nullptr, bendextratable,
 // Input memories
 		imask, inputStub, inputStubDisk2S,

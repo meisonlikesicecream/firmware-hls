@@ -5,49 +5,54 @@
 #include <iterator>
 
 #include "FileReadUtility.h"
-#include "Constants.h"
-
-
-const int nevents = 100;  //number of events to run
 
 using namespace std;
+
+const int nevents = 100;  //number of events to run
 
 // VMRouter Test for Layer 1, Allstub region E
 
 int main()
 {
-  // error counts
-  int err = 0;
 
   // Code dependent on which VMR it is.
+  // Note that one also needs to change if one has TEInner/Outer and Overlap
 
   // The following are the same as maxCopies unless we are at the border of a sector
+  // Note that the testbench assumes that the difference in the number of copies
+  // between two neighbouring memories, e.g. PHIA1 and PHIA2, is at most 1
   constexpr int minTEICopies = maxTEICopies; // Minimum number of TE Inner copies
 
+  // The first and the last phi region is a special case due to the number of copies
   constexpr bool firstPhiRegion = false; // I.e. PHIA
   constexpr bool lastPhiRegion = false;
 
-  std::string finNames[numInputs] = {"VMR_L1PHIE/InputStubs_IL_L1PHIE_PS10G_1_B_04.dat",
+  // Input file names
+  string finNames[numInputs] = {"VMR_L1PHIE/InputStubs_IL_L1PHIE_PS10G_1_B_04.dat",
                       "VMR_L1PHIE/InputStubs_IL_L1PHIE_PS10G_2_B_04.dat",
                       "VMR_L1PHIE/InputStubs_IL_L1PHIE_neg_PS10G_1_B_04.dat",
                       "VMR_L1PHIE/InputStubs_IL_L1PHIE_neg_PS10G_2_B_04.dat"};
 
-  std::string allStubName = "VMR_L1PHIE/AllStubs_AS_L1PHIEn"; //Start of AllStub file name
+  // Start of AllStub file names, excluding the copy number
+  string allStubName = "VMR_L1PHIE/AllStubs_AS_L1PHIEn";
 
-  std::string meNames[numME] = {"VMR_L1PHIE/VMStubs_VMSME_L1PHIE17n1",
+  // Start of MEStub file names, including copy number, i.e. n1, as they only have one copy
+  string meNames[numME] = {"VMR_L1PHIE/VMStubs_VMSME_L1PHIE17n1",
                       "VMR_L1PHIE/VMStubs_VMSME_L1PHIE18n1",
                       "VMR_L1PHIE/VMStubs_VMSME_L1PHIE19n1",
                       "VMR_L1PHIE/VMStubs_VMSME_L1PHIE20n1"};
 
-  std::string teiNames[numTEI] = {"VMR_L1PHIE/VMStubs_VMSTE_L1PHIE17n",
+  // Start of TEInnerStub file names, excluding the copy number
+  string teiNames[numTEI] = {"VMR_L1PHIE/VMStubs_VMSTE_L1PHIE17n",
                       "VMR_L1PHIE/VMStubs_VMSTE_L1PHIE18n",
                       "VMR_L1PHIE/VMStubs_VMSTE_L1PHIE19n",
                       "VMR_L1PHIE/VMStubs_VMSTE_L1PHIE20n"};
 
-  std::string olNames[numOL] = {"VMR_L1PHIE/VMStubs_VMSTE_L1PHIQ9n",
+  // Start of TEInnerStub Overlap file names, excluding the copy number
+  string olNames[numOL] = {"VMR_L1PHIE/VMStubs_VMSTE_L1PHIQ9n",
                       "VMR_L1PHIE/VMStubs_VMSTE_L1PHIQ10n"};
 
-  std::string fileEnding = "_04.dat"; //All files ends with .dat, _04 specifies which sector
+  string fileEnding = "_04.dat"; //All files ends with .dat, _04 specifies which sector
 
 
   ///////////////////////////
@@ -116,6 +121,8 @@ int main()
     }
   }
 
+  // error count
+  int err = 0;
 
   ///////////////////////////
   // loop over events
@@ -137,9 +144,9 @@ int main()
   	VMRouterTop(bx, inputStub,
   			allStub, meMemories, teiMemories, olMemories);
 
-
     // compare the computed outputs with the expected ones
-    // add 1 per stub that is incorrect
+    // add 1 to the error count per stub that is incorrect
+
     bool truncation = false;
 
     // AllStub
@@ -154,12 +161,12 @@ int main()
 
     // TE Inner Memories
     for (unsigned int i = 0; i < numTEI; i++) {
-      int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies;
+      int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies; // Special case for the first phi region, PHIA
       for (unsigned int j = 0; j < numCopies; j++) {
         err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(teiMemories[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i), truncation);
       }
-      if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++;
-      if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--;
+      if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++; // Special case for the first phi region, PHIA
+      if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--; // Special case for the last phi region
     }
 
     // TE Inner Overlap memories
@@ -170,7 +177,7 @@ int main()
     }
   } // end of event loop
 
-	std::cerr << "Exiting with return value " << err << std::endl;
+	cerr << "Exiting with return value " << err << endl;
 	return err;
 
 }
