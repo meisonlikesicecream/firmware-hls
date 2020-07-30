@@ -456,7 +456,7 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 
 		bin = rzbits >> nfinerzbits; // Remove the 3 LSBs, i.e. the finebin bits
 
-		// Bin 4-7 is used for negative disks
+		// Half the bins, i.e. bin 4-7, are used for negative disks
 		if (negdisk)
 			bin += (1 << MEBinsBits)/2; // += 4
 
