@@ -70,16 +70,18 @@ constexpr int nphibitsraw = 7; // Number of bits used for calculating iPhiRawPlu
 
 // The length of the masks used for the memories
 constexpr int inmasksize = 6; // Input memories
-constexpr int memasksize = 32; // ME memories
-constexpr int teimasksize = 32; // TEInner memories
-constexpr int olmasksize = 16; // TEInner Overlap memories
-constexpr int teomasksize = 32; // TEOuter memories
+constexpr int memasksize = 1 << nmaxvmbits; // ME memories
+constexpr int teimasksize = 1 << nmaxvmbits; // TEInner memories
+constexpr int olmasksize = 1 << nmaxvmolbits; // TEInner Overlap memories
+constexpr int teomasksize = 1 << nmaxvmbits; // TEOuter memories
 
 // Some ugly correction constants to make the overall latency 108... TODO: Find better way to do this
 constexpr int kMaxProcLayerCorr = 7;
 constexpr int kMaxProcDiskCorr = 8;
 
-
+// Constants for determining if the stub should be saved using the rzbitstables
+constexpr int maxrzbits = 10; // Maximum number of bits used for each entry in the rzbits tables
+constexpr int maxrz = (1 << maxrzbits) - 1; // Anything above this value would correspond to -1, i.e. a non-valid stub
 
 
 
@@ -760,10 +762,11 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 			#pragma HLS UNROLL
 			allStub[n].write_mem(bx, allstubd, i);
 		}
+
 		// For debugging
-		#ifndef __SYNTHESIS__
-				std::cout << "Out put stub: " << std::hex << allstubd.raw() << std::dec << std::endl;
-		#endif // DEBUG
+#ifndef __SYNTHESIS__
+		std::cout << "Out put stub: " << std::hex << allstubd.raw() << std::dec << std::endl;
+#endif // DEBUG
 
 
 /////////////////////////////////////////////
@@ -830,18 +833,18 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 					createStubTEInner<DISK2S, OutType, Layer, Disk>(stubDisk2S, i, negdisk, rzbitsinnertable, phicorrtable, ivm, rzbits) :
 					createStubTEInner<InType, OutType, Layer, Disk>(stub, i, negdisk, rzbitsinnertable, phicorrtable, ivm, rzbits);
 
-			// For debugging
-			#ifndef __SYNTHESIS__
-						std::cout << "TEInner stub " << std::hex << stubte.raw()
-								<< std::endl;
-						std::cout << "ivm: " << std::dec << ivm <<std::endl
-								<< std::endl;
-			#endif // DEBUG
+// For debugging
+#ifndef __SYNTHESIS__
+			std::cout << "TEInner stub " << std::hex << stubte.raw()
+					<< std::endl;
+			std::cout << "ivm: " << std::dec << ivm <<std::endl
+					<< std::endl;
+#endif // DEBUG
 
 			// Write the TE Inner stub to the correct memory
-			// Only if it has a valid rzbits/binlookup value, less than 1024 (table uses 1048575 as "-1"),
+			// Only if it has a valid rzbits/binlookup value, less than maxrz/1023 (table uses 1048575 as "-1"),
 			// and a valid bend
-			if (rzbits <= 1024 && teimask[ivm]) {
+			if ((rzbits < maxrz) && teimask[ivm]) {
 				int memindex = ivm-firstte; // Index for the correct memory in memory array
 				int bendindex = memindex*MaxTEICopies; // Index for bendcut LUTs
 				for (int n = 0; n < MaxTEICopies; n++) {
@@ -916,31 +919,35 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 
 // For debugging
 #ifndef __SYNTHESIS__
-				std::cout << "Overlap stub " << " " << std::hex
-						<< stubol.raw() << std::endl;
-				std::cout << "ivm: " << std::dec << ivm << std::endl
-						<< std::endl;
+			std::cout << "Overlap stub " << " " << std::hex
+					<< stubol.raw() << std::endl;
+			std::cout << "ivm: " << std::dec << ivm << std::endl
+					<< std::endl;
 #endif // DEBUG
 
-				// Save stub to Overlap memories
-				// 1023 is like "-1" if we had signed stuff...
-				if (olmask[ivm] && (rzbits != 1023)) {
-					int memindex = ivm - firstol; // The memory index in array and addrcount
-					int bendindex = memindex*MaxOLCopies; // Index for bendcut LUTs
-					for (int n = 0; n < MaxOLCopies; n++) {
-						#pragma HLS UNROLL
-						bool passbend = bendoverlaptable[bendindex][stubol.getBend()];
-						if (passbend) {
-							olMemories[memindex][n].write_mem(bx, stubol, addrCountOL[memindex][n]);
-							addrCountOL[memindex][n] += 1;
-						}
-						bendindex++;
+			// Save stub to Overlap memories
+			// maxrz is like "-1" if we had signed stuff...
+			if (olmask[ivm] && (rzbits < maxrz)) {
+				int memindex = ivm - firstol; // The memory index in array and addrcount
+				int bendindex = memindex*MaxOLCopies; // Index for bendcut LUTs
+				for (int n = 0; n < MaxOLCopies; n++) {
+					#pragma HLS UNROLL
+					bool passbend = bendoverlaptable[bendindex][stubol.getBend()];
+					if (passbend) {
+						olMemories[memindex][n].write_mem(bx, stubol, addrCountOL[memindex][n]);
+						addrCountOL[memindex][n] += 1;
 					}
-				} else {
-					#ifndef __SYNTHESIS__
-					std::cout << "NO OVERLAP" << std::endl << std::endl;
-					#endif // DEBUG
+					bendindex++;
+				}
 			}
+
+// For debugging
+#ifndef __SYNTHESIS__
+			else {
+				std::cout << "NO OVERLAP" << std::endl << std::endl;
+			}
+#endif // DEBUG
+
 		} // End TE Overlap memories
 	} // Outside main loop
 } // End VMRouter
