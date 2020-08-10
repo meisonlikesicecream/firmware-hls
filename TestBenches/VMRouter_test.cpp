@@ -142,7 +142,7 @@ int main()
 
     // Unit Under Test
   	VMRouterTop(bx, inputStub,
-  			allStub, meMemories, teiMemories, olMemories);
+  			teiMemories, olMemories, allStub, meMemories);
 
     // compare the computed outputs with the expected ones
     // add 1 to the error count per stub that is incorrect

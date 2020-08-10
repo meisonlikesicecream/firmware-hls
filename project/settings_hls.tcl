@@ -7,7 +7,7 @@ if { [catch { exec ./download.sh } msg] } {
 cd $cwd
 
 # Set FPGA
-set_part {xcvu7p-flvb2104-1-e} -tool vivado
+set_part {xcvu7p-flvb2104-1-e}
 #set_part {xcku115-flvb2104-1-e} -tool vivado
 
 # Set clock frequency
@@ -17,10 +17,10 @@ create_clock -period 250MHz -name default
 config_compile -name_max_length 100
 
 # Remove variables from IP interface if they are never used by HLS algo.
-config_interface -trim_dangling_port
+#config_interface -trim_dangling_port
 
 # Prevent HLS relaxing pipeline interval to meet timing.
-config_schedule -relax_ii_for_timing=0 -verbose
+#config_schedule -relax_ii_for_timing=0 -verbose
 
 # Encourage HLS to make more effort to find best solution.
 # (Worth trying, but increases CPU use, so not enabled by default)
