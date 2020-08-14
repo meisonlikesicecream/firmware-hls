@@ -30,10 +30,11 @@ void VMRouterTop(BXType bx,
 
 	// Masks of which memories that are being used. The first memory is represented by the LSB
 	static const ap_uint<inmasksize> inmask(0xF); // Input memories
-	static const ap_uint<memasksize> memask(0x000F0000UL); // ME memories
-	static const ap_uint<teimasksize> teimask(0x000F0000UL); // TE Inner memories
-	static const ap_uint<olmasksize> olmask(0x300); // TE Inner Overlap memories
+	static const ap_uint<memasksize> memask = ((1 << nvmmelayers[kLAYER -1]) - 1) << nvmmelayers[kLAYER -1] * (phiRegion - 'A');//createMask<memasksize>(phiRegion, nvmmelayers[kLAYER -1]); //(kLAYER) ? createMask<memasksize>(phiRegion, nvmmelayers[kLAYER -1]) : createMask<memasksize>(phiRegion, nvmmedisks[kDISK -1]); // ME memories
+	static const ap_uint<teimasksize> teimask = (kLAYER) ? createMask<teimasksize>(phiRegion, nvmtelayers[kLAYER -1]) : createMask<teimasksize>(phiRegion, nvmtedisks[kDISK -1]); // TE Inner memories
+	static const ap_uint<olmasksize> olmask = createMask<olmasksize>(phiRegion, nvmteoverlaplayers[kLAYER -1]); // TE Inner Overlap memories
 	static const ap_uint<teomasksize> teomask(0x0); // TE Outer memories
+	//static const ap_uint<memasksize> memask = teimask;
 
 	///////////////////////////
 	// Open Lookup tables
@@ -135,10 +136,10 @@ void VMRouterTop(BXType bx,
 
 	// Combine all the temporary tables into one big table
 	static const ap_uint<bendtablesize> bendtable[] = {
-		tmptable1_n1, tmptable1_n2, tmptable1_n3, tmptable1_n4, tmptable1_n5,
-		tmptable2_n1, tmptable2_n2, tmptable2_n3, tmptable2_n4, tmptable2_n5,
-		tmptable3_n1, tmptable3_n2, tmptable3_n3, tmptable3_n4, tmptable3_n5,
-		tmptable4_n1, tmptable4_n2, tmptable4_n3, tmptable4_n4, tmptable4_n5};
+		arrayToInt<bendtablesize>(tmptable1_n1), arrayToInt<bendtablesize>(tmptable1_n2), arrayToInt<bendtablesize>(tmptable1_n3), arrayToInt<bendtablesize>(tmptable1_n4), arrayToInt<bendtablesize>(tmptable1_n5),
+		arrayToInt<bendtablesize>(tmptable2_n1), arrayToInt<bendtablesize>(tmptable2_n2), arrayToInt<bendtablesize>(tmptable2_n3), arrayToInt<bendtablesize>(tmptable2_n4), arrayToInt<bendtablesize>(tmptable2_n5),
+		arrayToInt<bendtablesize>(tmptable3_n1), arrayToInt<bendtablesize>(tmptable3_n2), arrayToInt<bendtablesize>(tmptable3_n3), arrayToInt<bendtablesize>(tmptable3_n4), arrayToInt<bendtablesize>(tmptable3_n5),
+		arrayToInt<bendtablesize>(tmptable4_n1), arrayToInt<bendtablesize>(tmptable4_n2), arrayToInt<bendtablesize>(tmptable4_n3), arrayToInt<bendtablesize>(tmptable4_n4), arrayToInt<bendtablesize>(tmptable4_n5)};
 
 
 	// TE Overlap Memory 1
@@ -163,19 +164,18 @@ void VMRouterTop(BXType bx,
 
 	// Combine all the temporary extra tables into one big table
 	static const ap_uint<bendtablesize> bendextratable[] = {
-		tmpextratable1_n1, tmpextratable1_n2, tmpextratable1_n3,
-		tmpextratable2_n1, tmpextratable2_n2, tmpextratable2_n3}; // Only used for overlap
-
+		arrayToInt<bendtablesize>(tmpextratable1_n1), arrayToInt<bendtablesize>(tmpextratable1_n2), arrayToInt<bendtablesize>(tmpextratable1_n3),
+		arrayToInt<bendtablesize>(tmpextratable2_n1), arrayToInt<bendtablesize>(tmpextratable2_n2), arrayToInt<bendtablesize>(tmpextratable2_n3)}; // Only used for overlap
 
 // Takes 2 clock cycles before on gets data, used at high frequencies
-//#pragma HLS resource variable=inputStub[0].get_mem() latency=2
-//#pragma HLS resource variable=inputStub[1].get_mem() latency=2
-//#pragma HLS resource variable=inputStub[2].get_mem() latency=2
-//#pragma HLS resource variable=inputStub[3].get_mem() latency=2
-//
-//#pragma HLS resource variable=finebintable latency=2
-//#pragma HLS resource variable=rzbitstable latency=2
-//#pragma HLS resource variable=rzbitsextratable latency=2
+#pragma HLS resource variable=inputStub[0].get_mem() latency=2
+#pragma HLS resource variable=inputStub[1].get_mem() latency=2
+#pragma HLS resource variable=inputStub[2].get_mem() latency=2
+#pragma HLS resource variable=inputStub[3].get_mem() latency=2
+
+#pragma HLS resource variable=finebintable latency=2
+#pragma HLS resource variable=rzbitstable latency=2
+#pragma HLS resource variable=rzbitsextratable latency=2
 // #pragma HLS resource variable=bendtable latency=2
 // #pragma HLS resource variable=bendextratable latency=2
 // phicorrtable and bendtable seems to be using LUTs as they relatively small?
@@ -211,4 +211,32 @@ void VMRouterTop(BXType bx,
 		);
 
 	return;
+}
+
+
+///////////////////////////////////////////////////////
+// Help functions
+
+// Converts an array of 0s and 1s to an ap_uint
+template<int arraysize>
+ap_uint<arraysize> arrayToInt(ap_uint<1> array[arraysize]) {
+	ap_uint<arraysize> number;
+
+	for(int i = 0; i < arraysize; i++) {
+		#pragma HLS unroll
+		number[i] = array[i];
+	}
+
+	return number;
+}
+
+// Creates (memory) masks for a specific phi region with "nvm" VMs.
+// LSB corresponds to the first memory and MSB to the last,
+// a "1" implies that the specified memory is used for this phi region
+template<int masksize>
+inline ap_uint<masksize> createMask(int phi, int nvm) {
+	ap_uint<masksize> mask = (1 << nvm) - 1; // Create "nvm" 1s, e.g. "1111"
+	mask = mask << nvm * (phi - 'A'); // Shift the mask until it corresponds to the correct phi region
+
+	return mask;
 }
