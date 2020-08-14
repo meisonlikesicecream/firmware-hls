@@ -11,11 +11,20 @@ using namespace std;
 const int nevents = 100;  //number of events to run
 
 // VMRouter Test for Layer 1, Allstub region E
+// Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
+
+// NOTE: to run a different phi region, change the following
+//          - minTEIcopies
+//          - first/lastPhiRegion
+//          - memory file names
+//          - the call to VMRouterTop()
+//          - and the changes listed in VMRouterTop.cc
+
 
 int main()
 {
-
-  // Code dependent on which VMR it is.
+  ///////////////////////////////////////
+  // Variables for that are specified with regards to the phi region
   // Note that one also needs to change if one has TEInner/Outer and Overlap
 
   // The following are the same as maxCopies unless we are at the border of a sector
@@ -23,7 +32,7 @@ int main()
   // between two neighbouring memories, e.g. PHIA1 and PHIA2, is at most 1
   constexpr int minTEICopies = maxTEICopies; // Minimum number of TE Inner copies
 
-  // The first and the last phi region is a special case due to the number of copies
+  // The first and the last phi region are special cases due to the number of copies
   constexpr bool firstPhiRegion = false; // I.e. PHIA
   constexpr bool lastPhiRegion = false;
 
@@ -68,16 +77,16 @@ int main()
   static VMStubTEInnerMemory<BARRELOL> olMemories[numOL][maxOLCopies];
 
 
-///////////////////////////
-// open input files
-  cout << "Open files..." << endl;
+  ///////////////////////////
+  // open input files
+    cout << "Open files..." << endl;
 
-  ifstream fin_inputstub[numInputs];
+    ifstream fin_inputstub[numInputs];
 
-  for (unsigned int i = 0; i < numInputs; i++) {
-    bool valid = openDataFile(fin_inputstub[i], finNames[i]);
-    if (not valid) return -1;
-  }
+    for (unsigned int i = 0; i < numInputs; i++) {
+      bool valid = openDataFile(fin_inputstub[i], finNames[i]);
+      if (not valid) return -1;
+    }
 
   ///////////////////////////
   // open output files

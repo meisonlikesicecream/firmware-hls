@@ -3,6 +3,16 @@
 // -------
 // First tracklet 2.0 version -- December 2018 -- wittich
 
+// Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
+// Several types of memories depending on which module that is going to read it.
+// Each VMRouter correspond to one phi/AllStub region.
+// Each VM correspond to one ME/TE memory.
+// Each memory type contain different bits of the same stub.
+// AllStub and TE memories has several versions/copies of the VM.
+
+// NOTE: Nothing in VMRouter.h needs to be changed to run a different phi region
+
+
 #ifndef TrackletAlgorithm_VMRouter_h
 #define TrackletAlgorithm_VMRouter_h
 
@@ -15,6 +25,10 @@
 #include "VMStubMEMemory.h"
 #include "VMStubTEInnerMemory.h"
 #include "VMStubTEOuterMemory.h"
+
+
+/////////////////////////////////////////
+// Constants
 
 // from Constants.hh -- needs a final home?
 constexpr unsigned int nallstubslayers[6] = { 8, 4, 4, 4, 4, 4 }; // Number of AllStub memories, i.e. coarse phi regions, per sector
@@ -85,6 +99,7 @@ constexpr int maxrz = (1 << maxrzbits) - 1; // Anything above this value would c
 
 
 
+//////////////////////////////////////
 // Functions used by the VMR
 
 // Returns top 5 (nmaxvmbits) bits of phi, i.e. max 31 in decimal
@@ -177,6 +192,46 @@ inline ap_uint<nmaxvmbits> getFirstMemNumber(const ap_uint<static_cast<int>(maxv
 	return i;
 }
 
+// Clears the memories of one-dimensional memory arrays
+template<class MaskType, class MemType>
+void clear1DMemoryArray(const BXType bx, const int arraysize, const MaskType mask, const int firstmem, MemType memArray[]) {
+	#pragma HLS inline
+	for (int i = 0; i < arraysize; i++) {
+		#pragma HLS UNROLL
+		// Only clear the memory if it is used by the VMR (defined by the mask)
+		if (mask[i + firstmem]) memArray[i].clear(bx);
+	}
+}
+
+// Clears the memories of two-dimensional memory arrays
+template<int MaxCopies, class MaskType, class MemType>
+void clear2DMemoryArray(const BXType bx, const int nvm, const MaskType mask, const int firstmem, MemType memArray[][MaxCopies]) {
+	#pragma HLS inline
+	for (int i = 0; i < nvm; i++) {
+		#pragma HLS UNROLL
+		// Only clear the memory if it is used by the VMR (defined by the mask)
+		if (mask[i + firstmem]) {
+			for (int j = 0; j < MaxCopies; j++) {
+				#pragma HLS UNROLL
+				memArray[i][j].clear(bx);
+			}
+		}
+	}
+}
+
+// Clears a 2D array of ints by setting everything to 0
+template<int nvm, int MaxCopies>
+void clear2DArray(int array[nvm][MaxCopies]) {
+	#pragma HLS inline
+	#pragma HLS array_partition variable=array complete dim=0
+	for (int i = 0; i < nvm; i++) {
+		#pragma HLS UNROLL
+		for (int j = 0; j < MaxCopies; j++) {
+			#pragma HLS UNROLL
+				array[i][j] = 0;
+		}
+	}
+}
 
 // Returns a ME stub with all the values set
 template<regionType InType, regionType OutType, int Layer, int Disk>
@@ -471,7 +526,6 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 }
 
 
-
 // Returns a TE Overlap stub with all the values set
 template<regionType InType, int Layer>
 inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
@@ -587,57 +641,36 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 
 	// Reset address counters in output memories
 	// Only clear if the masks says that memory is used
-	ALLSTUB_CLEAR:	for (int i = 0; i < MaxAllCopies; i++) {
-		#pragma HLS UNROLL
-		allStub[i].clear(bx);
-	}
+	static const ap_uint<MaxAllCopies> allmask = (1 << MaxAllCopies) - 1; // Binary number corresponding to 'MaxAllCopies' of 1s
+	clear1DMemoryArray(bx, MaxAllCopies, allmask, 0, allStub);
 
 	if (memask) {
-		ME_CLEAR:	for (int i = 0; i < nvmme; i++) {
-			#pragma HLS UNROLL
-			if (memask[i + firstme]) meMemories[i].clear(bx);
-		}
+		clear1DMemoryArray(bx, nvmme, memask, firstme, meMemories);
 	}
-
 	if (teimask) {
-		TEI_CLEAR:	for (int i = 0; i < nvmte; i++) {
-			#pragma HLS UNROLL
-			if (teimask[i + firstte]) {
-				for (int j = 0; j < MaxTEICopies; j++) {
-					#pragma HLS UNROLL
-					teiMemories[i][j].clear(bx);
-				}
-			}
-		}
+		clear2DMemoryArray<MaxTEICopies>(bx, nvmte, teimask, firstte, teiMemories);
 	}
-
 	if (teomask) {
-		TEO_CLEAR:	for (int i = 0; i < nvmte; i++) {
-			#pragma HLS UNROLL
-			if (teomask[i + firstte]) {
-				for (int j = 0; j < MaxTEOCopies; j++) {
-					#pragma HLS UNROLL
-					teoMemories[i][j].clear(bx);
-				}
-			}
-		}
+		clear2DMemoryArray<MaxTEOCopies>(bx, nvmte, teomask, firstte, teoMemories);
 	}
-
 	if (olmask) {
-	OL_CLEAR:	for (int i = 0; i < nvmol; i++) {
-			#pragma HLS UNROLL
-			if (olmask[i + firstol]) {
-				for (int j = 0; j < MaxOLCopies; j++) {
-					#pragma HLS UNROLL
-					olMemories[i][j].clear(bx);
-			}
-			}
-		}
+		clear2DMemoryArray<MaxOLCopies>(bx, nvmol, olmask, firstol, olMemories);
 	}
 
+	// Create variables that keep track of which memory address to read and write to
+	ap_uint<kNBits_MemAddr> read_addr(0); // Reading of input stubs
+
+	int addrCountTEI[nvmte][MaxTEICopies]; // Writing of TE Inner stubs
+	if (teimask) {
+		clear2DArray<nvmte, MaxTEICopies>(addrCountTEI);
+	}
+
+	int addrCountOL[nvmol][MaxOLCopies]; // Writing of TE Overlap stubs
+	if (olmask) {
+		clear2DArray<nvmol, MaxOLCopies>(addrCountOL);
+	}
 
 	// Number of data in each input memory
-
 	typename InputStubMemory<InType>::NEntryT ninputs[inmasksize]; // Array containing the number of inputs. Last two indices are for DISK2S
 	#pragma HLS array_partition variable=ninputs complete dim=0
 
@@ -654,34 +687,6 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 		}
 		ntotal += ninputs[i];
 	}
-
-	// Create variables that keep track of which memory address to read and write to
-
-	ap_uint<kNBits_MemAddr> read_addr(0); // Reading of input stubs
-
-	int addrCountTEI[nvmte][MaxTEICopies]; // Writing of TE Inner stubs
-	if (teimask) {
-		#pragma HLS array_partition variable=addrCountTEI complete dim=0
-		ADDR_TEI:	for (int i = 0; i < nvmte; i++) {
-			#pragma HLS UNROLL
-			for (int j = 0; j < MaxTEICopies; j++) {
-				#pragma HLS UNROLL
-					addrCountTEI[i][j] = 0;
-			}
-		}
-	}
-
-	int addrCountOL[nvmol][MaxOLCopies]; // Writing of TE Overlap stubs
-	if (olmask) {
-	#pragma HLS array_partition variable=addrCountOL complete dim=0
-	ADDR_OL:	for (int i = 0; i < nvmol; i++) {
-			#pragma HLS UNROLL
-			for (int j = 0; j < MaxOLCopies; j++) {
-				#pragma HLS UNROLL
-				addrCountOL[i][j] = 0;
-			}
-		}
-}
 
 
 /////////////////////////////////////

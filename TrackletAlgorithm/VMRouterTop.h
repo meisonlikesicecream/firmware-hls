@@ -4,9 +4,18 @@
 #include "VMRouter.h"
 
 // VMRouter Top Function for layer 1, AllStub region E
+// Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
+
+// NOTE: to run a different phi region, change the following
+//          - the constants in VMRouterTop.h
+//          - the input parameters of the VMRouterTop() function
+//          - the directories to the LUTs
+//          - the memory masks
+//          - the call to VMRouter() in VMRouterTop.cc
+
 
 //////////////////////////////////
-// Variables for that are specified with regards to the VMR region
+// Variables for that are specified with regards to the phi region
 // Note that one also needs to change if one has TEInner/Outer and Overlap
 
 constexpr int layer(1); // Which barrel layer number the data is coming from, 0 if not barrel
