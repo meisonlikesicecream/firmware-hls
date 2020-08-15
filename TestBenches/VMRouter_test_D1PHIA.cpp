@@ -11,6 +11,7 @@ using namespace std;
 const int nevents = 100;  //number of events to run
 
 // VMRouter Top Function for Disk 1, AllStub region A
+// Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
 int main()
 {
@@ -28,7 +29,7 @@ int main()
   constexpr bool lastPhiRegion = false;
 
   // Input file names
-  string finNames[numInputs] = {"VMR_D1PHIA/InputStubs_IL_D1PHIA_2S_5_A_04.dat",
+  string inNames[numInputs] = {"VMR_D1PHIA/InputStubs_IL_D1PHIA_2S_5_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_PS10G_2_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_PS5G_4_A_04.dat",
                       "VMR_D1PHIA/InputStubs_IL_D1PHIA_neg_2S_5_A_04.dat",
@@ -54,6 +55,9 @@ int main()
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA3n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIA4n"};
 
+  // Start of TEInnerStub Overlap file names, excluding the copy number
+  string olNames[numOL];
+
   // Start of TEOuter file names, excluding the copy number
   string teoNames[numTEO] = {"VMR_D1PHIA/VMStubs_VMSTE_D1PHIX1n",
                       "VMR_D1PHIA/VMStubs_VMSTE_D1PHIX2n",
@@ -65,8 +69,8 @@ int main()
 
   ///////////////////////////
   // input memories
-  static InputStubMemory<inputType> inputStub[numInputsDiskPS];
-  static InputStubMemory<inputType2> inputStubDisk2S[numInputsDisk2S];
+  static InputStubMemory<inputType> inputStub[numInputs];
+  static InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S]; //Only used for Disks
 
   // output memories
   static AllStubMemory<outputType> allStub[maxAllCopies];
@@ -75,10 +79,9 @@ int main()
   // TE Inner memories, including copies
   static VMStubTEInnerMemory<outputType> teiMemories[numTEI][maxTEICopies];
   // TE Inner Overlap memories, including copies
-  //static VMStubTEInnerMemory<BARRELOL> olMemories[1][1];
+  static VMStubTEInnerMemory<BARRELOL> olMemories[numOL][maxOLCopies];
   // TE Outer memories
   static VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies];
-
 
   ///////////////////////////
   // open input files
@@ -87,34 +90,35 @@ int main()
     ifstream fin_inputstub[numInputs];
 
     for (unsigned int i = 0; i < numInputs; i++) {
-      bool valid = openDataFile(fin_inputstub[i], finNames[i]);
+      bool valid = openDataFile(fin_inputstub[i], inNames[i]);
       if (not valid) return -1;
     }
 
-    ///////////////////////////
-    // open output files
+  ///////////////////////////
+  // open output files
 
-    // AllStub
-    ifstream fout_allstub[maxAllCopies];
+  // AllStub
+  ifstream fout_allstub[maxAllCopies];
 
-    for (unsigned int i = 0; i < maxAllCopies; i++) {
-      bool valid = openDataFile(fout_allstub[i], allStubName + to_string(i+1) + fileEnding);
-      if (not valid) return -1;
-    }
+  for (unsigned int i = 0; i < maxAllCopies; i++) {
+    bool valid = openDataFile(fout_allstub[i], allStubName + to_string(i+1) + fileEnding);
+    if (not valid) return -1;
+  }
 
-    // ME memories
-    ifstream fout_vmstubme[numME];
+  // ME memories
+  ifstream fout_vmstubme[numME];
 
-    for (unsigned int i = 0; i < numME; i++) {
-      bool valid =  openDataFile(fout_vmstubme[i], meNames[i] + fileEnding);
-      if (not valid) return -1;
-    }
+  for (unsigned int i = 0; i < numME; i++) {
+    bool valid =  openDataFile(fout_vmstubme[i], meNames[i] + fileEnding);
+    if (not valid) return -1;
+  }
 
-    // TE Inner
-  	ifstream fout_vmstubtei[numTEI][maxTEICopies];
+  // TE Inner
+	ifstream fout_vmstubtei[numTEI][maxTEICopies];
 
+  if (maxTEICopies > 1) {
+    int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies;
     for (unsigned int i = 0; i < numTEI; i++) {
-      int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies;
       for (unsigned int j = 0; j < numCopies; j++) {
         bool valid = openDataFile(fout_vmstubtei[i][j], teiNames[i] + to_string(j+1) + fileEnding);
         if (not valid) return -1;
@@ -122,12 +126,26 @@ int main()
       if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++;
       if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--;
     }
+  }
 
-    // TE Outer
-  	ifstream fout_vmstubteo[numTEO][maxTEOCopies];
+  // TE Inner Overlap
+	ifstream fout_vmstubteol[numOL][maxOLCopies];
 
+  if (maxOLCopies > 1) {
+    for (unsigned int i = 0; i < numOL; i++) {
+      for (unsigned int j = 0; j < maxOLCopies; j++) {
+        bool valid = openDataFile(fout_vmstubteol[i][j], olNames[i] + to_string(j+1) + fileEnding);
+        if (not valid) return -1;
+      }
+    }
+  }
+
+  // TE Outer
+  ifstream fout_vmstubteo[numTEO][maxTEOCopies];
+
+  if (maxTEOCopies > 1) {
+    int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEOCopies;
     for (unsigned int i = 0; i < numTEO; i++) {
-      int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEICopies;
       for (unsigned int j = 0; j < numCopies; j++) {
         bool valid = openDataFile(fout_vmstubteo[i][j], teoNames[i] + to_string(j+1) + fileEnding);
         if (not valid) return -1;
@@ -135,8 +153,9 @@ int main()
       if (firstPhiRegion && (numCopies < maxTEOCopies)) numCopies++;
       if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--;
     }
+  }
 
-  // error counts
+  // error count
   int err = 0;
 
   ///////////////////////////
@@ -145,15 +164,19 @@ int main()
   for (unsigned int ievt = 0; ievt < nevents; ++ievt) {
     cout << "Event: " << dec << ievt << endl;
 
-    int num2S = 0; // Keeps track of how many 2S modules we have written to
+    int num2S = 0; // Keeps track of how many DISK 2S modules we have written to
 
     // read event and write to memories
     for (unsigned int i = 0; i < numInputs; i++) {
-      if (i == 0 || i == 3) {
-        writeMemFromFile<InputStubMemory<inputType2>>(inputStubDisk2S[num2S], fin_inputstub[i], ievt);
-        num2S++;
+      if (kLAYER) {
+        writeMemFromFile<InputStubMemory<inputType>>(inputStub[i], fin_inputstub[i], ievt);
       } else {
-        writeMemFromFile<InputStubMemory<inputType>>(inputStub[i - num2S], fin_inputstub[i], ievt);
+        if (i == 0 || i == 3) {
+          writeMemFromFile<InputStubMemory<DISK2S>>(inputStubDisk2S[num2S], fin_inputstub[i], ievt);
+          num2S++;
+        } else {
+          writeMemFromFile<InputStubMemory<inputType>>(inputStub[i - num2S], fin_inputstub[i], ievt);
+        }
       }
     }
 
@@ -162,17 +185,29 @@ int main()
     BXType bx_out;
 
     // Unit Under Test
-    VMRouterTop(bx, inputStub, inputStubDisk2S,
-        allStub, meMemories, teiMemories, teoMemories
-  	);
+  	VMRouterTop(bx, inputStub,
+        #if kDISK > 0
+        inputStubDisk2S,
+        #endif
+        #if kLAYER == 1 || kLAYER == 3 || kLAYER == 5 || kDISK == 1 || kDISK == 3
+        teiMemories,
+        #endif
+        #if kLAYER == 1 || kLAYER == 2
+        olMemories,
+        #endif
+        #if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 3 || kDISK == 4
+        teoMemories,
+        #endif
+        allStub, meMemories);
 
     // compare the computed outputs with the expected ones
     // add 1 to the error count per stub that is incorrect
 
     bool truncation = false;
+
     // AllStub
     for (unsigned int i = 0; i < numInputs; i++) {
-      err += compareMemWithFile<AllStubMemory<outputType>>(allStub[i], fout_allstub[i], ievt, "AllStub", truncation);
+      err += compareMemWithFile<AllStubMemory<outputType>>(allStub[i], fout_allstub[i], ievt, "AllStubn" + to_string(i + 1), truncation);
     }
 
     // ME Memories
@@ -181,27 +216,40 @@ int main()
     }
 
     // TE Inner Memories
-    for (unsigned int i = 0; i < numTEI; i++) {
+    if (maxTEICopies > 1) {
       int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies; // Special case for the first phi region, PHIA
-      for (unsigned int j = 0; j < numCopies; j++) {
-        err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(teiMemories[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i), truncation);
+      for (unsigned int i = 0; i < numTEI; i++) {
+        for (unsigned int j = 0; j < numCopies; j++) {
+          err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(teiMemories[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i) + "n" + to_string(j + 1), truncation);
+        }
+        if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++; // Special case for the first phi region, PHIA
+        if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--; // Special case for the last phi region
       }
-      if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++; // Special case for the first phi region, PHIA
-      if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--; // Special case for the last phi region
+    }
+
+    // TE Inner Overlap memories
+    if (maxOLCopies > 1) {
+      for (unsigned int i = 0; i < numOL; i++) {
+        for (unsigned int j = 0; j < maxOLCopies; j++) {
+          err += compareMemWithFile<VMStubTEInnerMemory<BARRELOL>>(olMemories[i][j], fout_vmstubteol[i][j], ievt, "VMStubTEOverlap" + to_string(i) + "n" + to_string(j + 1), truncation);
+        }
+      }
     }
 
     // TE Outer memories
-    for (unsigned int i = 0; i < numTEO; i++) {
-      int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEICopies; // Special case for the first phi region, PHIA
-      for (unsigned int j = 0; j < numCopies; j++) {
-        err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(teoMemories[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i), truncation);
+    if (maxTEOCopies > 1) {
+      int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEOCopies; // Special case for the first phi region, PHIA
+      for (unsigned int i = 0; i < numTEO; i++) {
+        for (unsigned int j = 0; j < numCopies; j++) {
+          err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(teoMemories[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i) + "n" + to_string(j + 1), truncation);
+        }
+        if (firstPhiRegion && (numCopies < maxTEOCopies)) numCopies++; // Special case for the first phi region, PHIA
+        if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--; // Special case for the last phi region
       }
-      if (firstPhiRegion && (numCopies < maxTEOCopies)) numCopies++; // Special case for the first phi region, PHIA
-      if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--; // Special case for the last phi region
     }
   } // end of event loop
 
-  cerr << "Exiting with return value " << err << endl;
-  return err;
+	cerr << "Exiting with return value " << err << endl;
+	return err;
 
 }

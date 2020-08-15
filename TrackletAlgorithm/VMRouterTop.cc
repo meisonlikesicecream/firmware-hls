@@ -1,25 +1,35 @@
 #include "VMRouterTop.h"
 
 // VMRouter Top Function for layer 1, AllStub region E
+// Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
+
+// NOTE: to run a different phi region, change the following
+//          - the constants in VMRouterTop.h
+//          - the input parameters of the VMRouterTop() function
+//          - the directories to the LUTs
+//          - the memory masks
+//          - pragmas?
+//          - the call to VMRouter() in VMRouterTop.cc
+
 
 void VMRouterTop(BXType bx,
 	// Input memories
 	const InputStubMemory<inputType> inputStub[numInputs],
 #if kDISK > 0
-	const InputStubMemory<inputType2S> inputStub2S[numInputs2S], // Only disks has 2S modules
+	const InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S], // Only disks has 2S modules
 #endif
 
 	// Output memories
-#if kLAYER == 1 || kLAYER == 3 || kLAYER == 5 || kDISK == 1 || kDISK ==3
+#if kLAYER == 1 || kLAYER == 3 || kLAYER == 5 || kDISK == 1 || kDISK == 3
 	VMStubTEInnerMemory<outputType> teiMemories[numTEI][maxTEICopies],
-#endif
-
-#if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 3 || kDISK == 4
-	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies],
 #endif
 
 #if kLAYER == 1 || kLAYER == 2
 	VMStubTEInnerMemory<BARRELOL> olMemories[numOL][maxOLCopies],
+#endif
+
+#if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 3 || kDISK == 4
+	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies],
 #endif
 
 	AllStubMemory<outputType> allStub[maxAllCopies],
@@ -50,7 +60,7 @@ void VMRouterTop(BXType bx,
 	// Only used by layers.
 	// Indexed using phi and bend bits
 	static const int phicorrtable[] =
-#include "../emData/VMR/tables/VMPhiCorrL1.tab"
+#include "../emData/VMR/tables/VMPhiCorrL1.txt"
 
 
 	// LUT with the Z/R bits for TE memories
@@ -70,6 +80,7 @@ void VMRouterTop(BXType bx,
 	// LUT with bend-cuts for the TE memories
 	// The cuts are different depending on the memory version (nX)
 	// Indexed using bend bits
+
 	// TE Memory 1
 	ap_uint<1> tmptable1_n1[] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE17n1_vmbendcut.tab"
@@ -165,7 +176,7 @@ void VMRouterTop(BXType bx,
 	// Combine all the temporary extra tables into one big table
 	static const ap_uint<bendtablesize> bendextratable[] = {
 		arrayToInt<bendtablesize>(tmpextratable1_n1), arrayToInt<bendtablesize>(tmpextratable1_n2), arrayToInt<bendtablesize>(tmpextratable1_n3),
-		arrayToInt<bendtablesize>(tmpextratable2_n1), arrayToInt<bendtablesize>(tmpextratable2_n2), arrayToInt<bendtablesize>(tmpextratable2_n3)}; // Only used for overlap
+		arrayToInt<bendtablesize>(tmpextratable2_n1), arrayToInt<bendtablesize>(tmpextratable2_n2), arrayToInt<bendtablesize>(tmpextratable2_n3)};
 
 // Takes 2 clock cycles before on gets data, used at high frequencies
 #pragma HLS resource variable=inputStub[0].get_mem() latency=2
@@ -219,7 +230,7 @@ void VMRouterTop(BXType bx,
 
 // Converts an array of 0s and 1s to an ap_uint
 template<int arraysize>
-ap_uint<arraysize> arrayToInt(ap_uint<1> array[arraysize]) {
+inline ap_uint<arraysize> arrayToInt(ap_uint<1> array[arraysize]) {
 	ap_uint<arraysize> number;
 
 	for(int i = 0; i < arraysize; i++) {
