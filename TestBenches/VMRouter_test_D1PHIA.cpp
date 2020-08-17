@@ -195,7 +195,7 @@ int main()
         #if kLAYER == 1 || kLAYER == 2
         olMemories,
         #endif
-        #if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 3 || kDISK == 4
+        #if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 2 || kDISK == 4
         teoMemories,
         #endif
         allStub, meMemories);

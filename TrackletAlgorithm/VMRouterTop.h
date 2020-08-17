@@ -81,7 +81,7 @@ void VMRouterTop(BXType bx,
 	VMStubTEInnerMemory<BARRELOL> olMemories[numOL][maxOLCopies],
 #endif
 
-#if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 3 || kDISK == 4
+#if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 2 || kDISK == 4
 	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies],
 #endif
 

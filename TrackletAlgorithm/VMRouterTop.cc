@@ -28,7 +28,7 @@ void VMRouterTop(BXType bx,
 	VMStubTEInnerMemory<BARRELOL> olMemories[numOL][maxOLCopies],
 #endif
 
-#if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 3 || kDISK == 4
+#if kLAYER == 2 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 2 || kDISK == 4
 	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies],
 #endif
 
@@ -38,13 +38,17 @@ void VMRouterTop(BXType bx,
 //////////////////////////////////
 // Variables for that are specified with regards to the VMR region
 
+	constexpr int nvmme = (kLAYER) ? nvmmelayers[kLAYER-1] : nvmmedisks[kDISK-1]; // ME memories
+	constexpr int nvmte = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE memories
+	constexpr int nvmol = ((kLAYER == 1) || (kLAYER == 2)) ? nvmteoverlaplayers[kLAYER-1] : 0; // TE Overlap memories
+
 	// Masks of which memories that are being used. The first memory is represented by the LSB
-	static const ap_uint<inmasksize> inmask(0xF); // Input memories
-	static const ap_uint<memasksize> memask = ((1 << nvmmelayers[kLAYER -1]) - 1) << nvmmelayers[kLAYER -1] * (phiRegion - 'A');//createMask<memasksize>(phiRegion, nvmmelayers[kLAYER -1]); //(kLAYER) ? createMask<memasksize>(phiRegion, nvmmelayers[kLAYER -1]) : createMask<memasksize>(phiRegion, nvmmedisks[kDISK -1]); // ME memories
-	static const ap_uint<teimasksize> teimask = (kLAYER) ? createMask<teimasksize>(phiRegion, nvmtelayers[kLAYER -1]) : createMask<teimasksize>(phiRegion, nvmtedisks[kDISK -1]); // TE Inner memories
-	static const ap_uint<olmasksize> olmask = createMask<olmasksize>(phiRegion, nvmteoverlaplayers[kLAYER -1]); // TE Inner Overlap memories
-	static const ap_uint<teomasksize> teomask(0x0); // TE Outer memories
-	//static const ap_uint<memasksize> memask = teimask;
+	static const ap_uint<inmasksize> inmask = createMask<inmasksize>('A', numInputs); // Input memories
+	static const ap_uint<memasksize> memask = createMask<memasksize>(phiRegion, nvmme); // ME memories
+	static const ap_uint<teimasksize> teimask = ((kLAYER % 2) || kDISK % 2) ? createMask<teimasksize>(phiRegion, nvmte) : static_cast<ap_uint<teimasksize>>(0x0); // TE Inner memories, only used for odd layers/disk
+	static const ap_uint<olmasksize> olmask = (nvmol) ? createMask<olmasksize>(phiRegion, nvmol) : static_cast<ap_uint<olmasksize>>(0x0); // TE Inner Overlap memories, only used for layer 1 and 2
+	static const ap_uint<teomasksize> teomask = (((kLAYER != 0) && (kLAYER % 2 == 0)) || (kDISK != 0 && kDISK != 3)) ? createMask<teomasksize>(phiRegion, nvmte) : static_cast<ap_uint<teomasksize>>(0x0); // TE Outer memories, only for even layers/disks and disk 1
+
 
 	///////////////////////////
 	// Open Lookup tables
