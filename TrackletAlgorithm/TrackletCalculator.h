@@ -75,12 +75,6 @@ namespace TC {
   static const uint32_t mask_D3 = 0xF << shift_D3;
   static const uint32_t mask_D4 = 0xF << shift_D4;
 
-// the 1.0e-1 is a fudge factor needed to get the floating point truncation
-// right
-  static const float ptcut = 1.91;
-  static const ap_uint<13> rinvcut = 0.01 * 0.3 * 3.8 / ptcut / krinv + 1.0e-1;
-  static const ap_uint<9> z0cut_L1L2 = 15.0 / kz0 + 1.0e-1;
-  static const ap_uint<9> z0cut = 1.5 * 15.0 / kz0 + 1.0e-1;
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -352,9 +346,9 @@ TC::barrelSeeding(const AllStub<InnerRegion> &innerStub, const AllStub<OuterRegi
 // Reject tracklets with too high a curvature or with too large a longitudinal
 // impact parameter.
   bool success = true;
-  if (abs(*rinv) >= rinvcut)
+  if (abs(*rinv) >= static_cast<int>(rinvcut / krinv + 1.0e-1))
     success = false;
-  if (abs(*z0) >= ((Seed == TC::L1L2) ? z0cut_L1L2 : z0cut))
+  if (abs(*z0) >= static_cast<int>((Seed == TC::L1L2) ? (z0cut / kz0 + 1.0e-1) : (1.5 * z0cut / kz0 + 1.0e-1)))
     success = false;
 
   const ap_int<TrackletParameters::kTParPhi0Size + 2> phicrit = *phi0 - (*rinv<<1);
@@ -381,11 +375,11 @@ TC::addProj(const TrackletProjection<TProjType> &proj, const BXType bx, Tracklet
   if (TProjType != DISK) {
     if ((proj.getRZ() == (-(1 << (TrackletProjection<TProjType>::kTProjRZSize - 1))) || (proj.getRZ() == ((1 << (TrackletProjection<TProjType>::kTProjRZSize - 1)) - 1))))
       proj_success = false;
-    if (abs(proj.getRZ()) > 2048)
+    if (abs(proj.getRZ()) > static_cast<int>(zlength / kz + 1.0e-1))
       proj_success = false;
   }
   else {
-    if (proj.getRZ() < 205 || proj.getRZ() > 1911)
+    if (proj.getRZ() < static_cast<int>(rmindiskvm / krprojdisk + 1.0e-1) || proj.getRZ() > static_cast<int>(rmaxdisk / krprojdisk + 1.0e-1))
       proj_success = false;
   }
 
