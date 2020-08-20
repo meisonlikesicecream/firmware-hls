@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const int nevents = 1;  //number of events to run
+const int nevents = 100;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
