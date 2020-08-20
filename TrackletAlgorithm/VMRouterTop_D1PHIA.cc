@@ -3,6 +3,11 @@
 // VMRouter Top Function for Disk 1, AllStub region A
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
+// NOTE: To run this VMR, change the following
+//          - the included top function in VMRouter_test.cpp
+//          - the top function in script_VMR.tcl
+
+
 void VMRouterTop(BXType bx,
 	// Input memories
 	const InputStubMemory<inputType> inputStub[numInputs],
@@ -197,6 +202,7 @@ void VMRouterTop(BXType bx,
 //#pragma HLS resource variable=bendextratable latency=2
 //phicorrtable and bendtable seems to be using LUTs as they relatively small?
 
+
 	//////////////////////////////////
 	// Create memory masks
 
@@ -221,7 +227,7 @@ void VMRouterTop(BXType bx,
 		rzbitstable, nullptr, rzbitsextratable,
 		bendtable, nullptr, bendextratable,
 // Input memories
-		imask, inputStub, inputStubDisk2S,
+		inmask, inputStub, inputStubDisk2S,
 // AllStub memories
 		allStub,
 // ME memories

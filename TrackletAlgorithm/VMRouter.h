@@ -89,9 +89,9 @@ constexpr int teimasksize = 1 << nmaxvmbits; // TEInner memories
 constexpr int olmasksize = 1 << nmaxvmolbits; // TEInner Overlap memories
 constexpr int teomasksize = 1 << nmaxvmbits; // TEOuter memories
 
-// Some ugly correction constants to make the overall latency 108... TODO: Find better way to do this
+// Some ugly correction constants to make the overall latency 108... TODO: Find better way to do this?
 constexpr int kMaxProcLayerCorr = 5;
-constexpr int kMaxProcDiskCorr = 6;
+constexpr int kMaxProcDiskCorr = 7;
 
 // Constants for determining if the stub should be saved using the rzbitstables
 constexpr int maxrzbits = 10; // Maximum number of bits used for each entry in the rzbits tables

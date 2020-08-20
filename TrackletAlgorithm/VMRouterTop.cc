@@ -4,12 +4,12 @@
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
 // NOTE: to run a different phi region, change the following
-//          - the constants in VMRouterTop.h
-//          - the input parameters of the VMRouterTop() function
+//          - constants specified in VMRouterTop.h
 //          - the directories to the LUTs
-//          - the memory masks
-//          - pragmas?
 //          - the call to VMRouter() in VMRouterTop.cc
+//          - pragmas?
+//          - the included top function in VMRouter_test.cpp (if file name is changed)
+//          - the top function in script_VMR.tcl (if file name is changed)
 
 
 void VMRouterTop(BXType bx,
@@ -182,14 +182,6 @@ void VMRouterTop(BXType bx,
 // #pragma HLS resource variable=bendextratable latency=2
 // phicorrtable and bendtable seems to be using LUTs as they relatively small?
 
-
-// Set all outputs to registers??
-//#pragma HLS interface register port=allStub
-// Can't pipeline with II=1 if we set meMemories to a register
-//#pragma HLS interface register port=meMemories
-// Can't clear all TE memories in parallel if memories are set to a register?
-//#pragma HLS interface register port=teiMemories
-//#pragma HLS interface register port=olMemories
 
 	//////////////////////////////////
 	// Create memory masks

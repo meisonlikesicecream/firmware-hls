@@ -8,62 +8,134 @@
 
 using namespace std;
 
-const int nevents = 100;  //number of events to run
+const int nevents = 1;  //number of events to run
 
-// VMRouter Test for Layer 1, Allstub region E
+// VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
 // NOTE: to run a different phi region, change the following
-//          - minTEICopies, minTEOCopies
-//          - first/lastPhiRegion
-//          - memory file names
+//          - the included top function (if file name is changed)
 //          - and the changes listed in VMRouterTop.cc/h
 
 
-int main()
-{
-  ///////////////////////////////////////
-  // Consteants that are specified with regards to the phi region
-  // NOTE: Only for L1PHIE
+// Finds all memory names for the specified processing module found in the wiring file,
+// and adds them to the fileNames array with the memory files directory, excluding the copies nX.
+// The number of copies are kept track in the numCopiesArray.
+// E.g. finds all memories that start with "VMSME_L1PHIE", such as "VMSME_L1PHIE17" etc.
+bool getFileNames(string fileDirStart, string wireFileName, string memID, string nameList[], int numCopiesArray[]) {
 
-  // The following are the same as maxCopies unless we are at the border of a sector
-  // Note that the testbench assumes that the difference in the number of copies
-  // between two neighbouring memories, e.g. PHIA1 and PHIA2, is at most 1
-  constexpr int minTEICopies = maxTEICopies; // Minimum number of TE Inner copies
-  constexpr int minTEOCopies = 0;
+  ifstream wireFile; // Will contain the wiring file
 
-  // The first and the last phi region are special cases due to the number of copies
-  constexpr bool firstPhiRegion = false; // I.e. PHIA
-  constexpr bool lastPhiRegion = false;
+  int numMemories = 0; // Number of memories found
+  char delimeter = (memID.substr(0,2) == "IL") ? ' ' : 'n'; // Different delimeter if input or output memories
+
+  bool valid = openDataFile(wireFile, wireFileName); // Open the wiring file
+
+  // Check if the wiring file was opened properly.
+  if (not valid) {
+    cout << "Could not find wiring file." << endl;
+    return 0;
+  }
+
+  // Loop over all lines in the wiring file
+  for (string inputLine; getline(wireFile, inputLine); ) {
+
+    // If we find the memory we are looking for
+    if (inputLine.find(memID) != string::npos) {
+
+      string tmpMemoryDir = fileDirStart + "_" + inputLine.substr(0, inputLine.find(delimeter)); // The directory and the name of the memory (first part of the line)
+
+      // Add the start of the memory name to the list if we haven't added it before, i.e. no copies
+      if (numCopiesArray[0] == 0) {
+        nameList[numMemories] = tmpMemoryDir;
+        numCopiesArray[numMemories]++;
+        numMemories++;
+      } else if (tmpMemoryDir != nameList[numMemories - 1]) {
+        nameList[numMemories] = tmpMemoryDir;
+        numCopiesArray[numMemories]++;
+        numMemories++;
+      } else {
+        numCopiesArray[numMemories - 1]++;
+      }
+    }
+  }
+
+  return 1;
+}
+
+int main() {
+
+  /////////////////////////////////////////////
+  // Get lists of the input/output memory names
+
+  // Uses wires_hourglass.dat wiring file
+  string wireFileName = "emData/wires_hourglass.dat"; // The wiring file name with directory
+  string testDataDirectory = "emData/MemPrints/"; // Directory for the test data
+
+  string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegion : "D" + to_string(kDISK) + "PHI" + phiRegion; // Which layer/disk and phi region
+  string fileEnding = (sector < 10) ? "_0" + to_string(sector) + ".dat" :  "_" + to_string(sector) + ".dat"; //All files ends with .dat. "_XX" specifies which sector
+
+  char specialPhiRegion[] = {'X', 'Y', 'Z', 'W', 'Q', 'R', 'S', 'T'}; // Special naming for the TE overlap memories, and outer memories in Disk 1
 
   // Input file names
-  string inNames[numInputs] = {"VMR_L1PHIE/InputStubs_IL_L1PHIE_PS10G_1_B_04.dat",
-                      "VMR_L1PHIE/InputStubs_IL_L1PHIE_PS10G_2_B_04.dat",
-                      "VMR_L1PHIE/InputStubs_IL_L1PHIE_neg_PS10G_1_B_04.dat",
-                      "VMR_L1PHIE/InputStubs_IL_L1PHIE_neg_PS10G_2_B_04.dat"};
+  string inNameList[numInputs];
+  int inNumCopies[numInputs] = {0}; // Array containing the number of copies of each memory
+
+  string inDir = "InputStubs/InputStubs"; // Directory of InputStubs, including the first part of the file name
+  string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
+
+  // Get the input file names and check that the wring file can be opened properly
+  if (not getFileNames(testDataDirectory + inDir, wireFileName, inMemID, inNameList, inNumCopies)) return -1;
+
 
   // Start of AllStub file names, excluding the copy number
-  string allStubName = "VMR_L1PHIE/AllStubs_AS_L1PHIEn";
+  string allStubName = testDataDirectory + "Stubs/AllStubs_AS_" + layerID;
 
-  // Start of MEStub file names, including copy number, i.e. n1, as they only have one copy
-  string meNames[numME] = {"VMR_L1PHIE/VMStubs_VMSME_L1PHIE17n1",
-                      "VMR_L1PHIE/VMStubs_VMSME_L1PHIE18n1",
-                      "VMR_L1PHIE/VMStubs_VMSME_L1PHIE19n1",
-                      "VMR_L1PHIE/VMStubs_VMSME_L1PHIE20n1"};
 
-  // Start of TEInnerStub file names, excluding the copy number
-  string teiNames[numTEI] = {"VMR_L1PHIE/VMStubs_VMSTE_L1PHIE17n",
-                      "VMR_L1PHIE/VMStubs_VMSTE_L1PHIE18n",
-                      "VMR_L1PHIE/VMStubs_VMSTE_L1PHIE19n",
-                      "VMR_L1PHIE/VMStubs_VMSTE_L1PHIE20n"};
+  // Start of MEStub file names, excluding the copy number, i.e. "n1" as they only have one copy
+  string meNameList[numME];
+  int meNumCopies[numME] = {0}; // Array containing the number of copies of each memory
+
+  string meDir = "VMStubsME/VMStubs"; // Directory of MEStubs, including the first part of the file name
+  string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
+
+  getFileNames(testDataDirectory + meDir, wireFileName, meMemID, meNameList, meNumCopies);
+
+
+  // Start of TEInnerStub file names, excluding the copy number "nX"
+  string teiNameList[numTEI];
+  int teiNumCopies[numTEI] = {0}; // Array containing the number of copies of each memory
+
+  if (maxTEICopies > 1) {
+    string teiDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string teiMemID = "VMSTE_" + layerID; // TE Inner memory ID for the specified phi region
+
+    getFileNames(testDataDirectory + teiDir, wireFileName, teiMemID, teiNameList, teiNumCopies);
+  }
+
 
   // Start of TEInnerStub Overlap file names, excluding the copy number
-  string olNames[numOL] = {"VMR_L1PHIE/VMStubs_VMSTE_L1PHIQ9n",
-                      "VMR_L1PHIE/VMStubs_VMSTE_L1PHIQ10n"};
+  string olNameList[numOL];
+  int olNumCopies[numOL] = {0}; // Array containing the number of copies of each memory
 
-  string teoNames[numTEO];
+  if (maxOLCopies > 1) {
+    string olDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + specialPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
 
-  string fileEnding = "_04.dat"; //All files ends with .dat, _04 specifies which sector
+    getFileNames(testDataDirectory + olDir, wireFileName, olMemID, olNameList, olNumCopies);
+  }
+
+
+  // Start of TEOuterStub file names, excluding the copy number "nX"
+  string teoNameList[numTEO];
+  int teoNumCopies[numTEO]; // Array containing the number of copies of each memory
+
+  if (maxTEOCopies > 1) {
+    string teoDir = "VMStubsTe/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string teoMemID = (kDISK != 1) ? "VMSTE_" + layerID : "VMSTE_D" + to_string(kLAYER) + "PHI" + specialPhiRegion[phiRegion - 'A']; // TE Outer memory ID for the specified phi region
+
+    getFileNames(testDataDirectory + teoDir, wireFileName, teoMemID, teoNameList, teoNumCopies);
+  }
 
 
   ///////////////////////////
@@ -82,6 +154,7 @@ int main()
   // TE Outer memories
   static VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies];
 
+
   ///////////////////////////
   // open input files
     cout << "Open files..." << endl;
@@ -89,9 +162,10 @@ int main()
     ifstream fin_inputstub[numInputs];
 
     for (unsigned int i = 0; i < numInputs; i++) {
-      bool valid = openDataFile(fin_inputstub[i], inNames[i]);
+      bool valid = openDataFile(fin_inputstub[i], inNameList[i] + fileEnding);
       if (not valid) return -1;
     }
+
 
   ///////////////////////////
   // open output files
@@ -100,7 +174,7 @@ int main()
   ifstream fout_allstub[maxAllCopies];
 
   for (unsigned int i = 0; i < maxAllCopies; i++) {
-    bool valid = openDataFile(fout_allstub[i], allStubName + to_string(i+1) + fileEnding);
+    bool valid = openDataFile(fout_allstub[i], allStubName + "n" + to_string(i+1) + fileEnding);
     if (not valid) return -1;
   }
 
@@ -108,7 +182,7 @@ int main()
   ifstream fout_vmstubme[numME];
 
   for (unsigned int i = 0; i < numME; i++) {
-    bool valid =  openDataFile(fout_vmstubme[i], meNames[i] + fileEnding);
+    bool valid =  openDataFile(fout_vmstubme[i], meNameList[i] + "n1" + fileEnding);
     if (not valid) return -1;
   }
 
@@ -117,13 +191,10 @@ int main()
 
   if (maxTEICopies > 1) {
     for (unsigned int i = 0; i < numTEI; i++) {
-      int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies;
-      for (unsigned int j = 0; j < numCopies; j++) {
-        bool valid = openDataFile(fout_vmstubtei[i][j], teiNames[i] + to_string(j+1) + fileEnding);
+      for (unsigned int j = 0; j < teiNumCopies[i]; j++) {
+        bool valid = openDataFile(fout_vmstubtei[i][j], teiNameList[i] + "n" + to_string(j+1) + fileEnding);
         if (not valid) return -1;
       }
-      if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++;
-      if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--;
     }
   }
 
@@ -132,8 +203,8 @@ int main()
 
   if (maxOLCopies > 1) {
     for (unsigned int i = 0; i < numOL; i++) {
-      for (unsigned int j = 0; j < maxOLCopies; j++) {
-        bool valid = openDataFile(fout_vmstubteol[i][j], olNames[i] + to_string(j+1) + fileEnding);
+      for (unsigned int j = 0; j < olNumCopies[i]; j++) {
+        bool valid = openDataFile(fout_vmstubteol[i][j], olNameList[i] + "n" + to_string(j+1) + fileEnding);
         if (not valid) return -1;
       }
     }
@@ -144,13 +215,10 @@ int main()
 
   if (maxTEOCopies > 1) {
     for (unsigned int i = 0; i < numTEO; i++) {
-      int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEICopies;
-      for (unsigned int j = 0; j < numCopies; j++) {
-        bool valid = openDataFile(fout_vmstubteo[i][j], teoNames[i] + to_string(j+1) + fileEnding);
+      for (unsigned int j = 0; j < teoNumCopies[i]; j++) {
+        bool valid = openDataFile(fout_vmstubteo[i][j], teoNameList[i] + "n" + to_string(j+1) + fileEnding);
         if (not valid) return -1;
       }
-      if (firstPhiRegion && (numCopies < maxTEOCopies)) numCopies++;
-      if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--;
     }
   }
 
@@ -185,7 +253,7 @@ int main()
 
     // Unit Under Test
   	VMRouterTop(bx, inputStub,
-        #if kDisk > 0
+        #if kDISK > 0
         inputStubDisk2S,
         #endif
         #if kLAYER == 1 || kLAYER == 3 || kLAYER == 5 || kDISK == 1 || kDISK == 3
@@ -217,19 +285,16 @@ int main()
     // TE Inner Memories
     if (maxTEICopies > 1) {
       for (unsigned int i = 0; i < numTEI; i++) {
-        int numCopies = (firstPhiRegion) ? minTEICopies : maxTEICopies; // Special case for the first phi region, PHIA
-        for (unsigned int j = 0; j < numCopies; j++) {
+        for (unsigned int j = 0; j < teiNumCopies[i]; j++) {
           err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(teiMemories[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i), truncation);
         }
-        if (firstPhiRegion && (numCopies < maxTEICopies)) numCopies++; // Special case for the first phi region, PHIA
-        if (lastPhiRegion && (numCopies > minTEICopies)) numCopies--; // Special case for the last phi region
       }
     }
 
     // TE Inner Overlap memories
     if (maxOLCopies > 1) {
       for (unsigned int i = 0; i < numOL; i++) {
-        for (unsigned int j = 0; j < maxOLCopies; j++) {
+        for (unsigned int j = 0; j < olNumCopies[i]; j++) {
           err += compareMemWithFile<VMStubTEInnerMemory<BARRELOL>>(olMemories[i][j], fout_vmstubteol[i][j], ievt, "VMStubTEOverlap" + to_string(i), truncation);
         }
       }
@@ -238,12 +303,9 @@ int main()
     // TE Outer memories
     if (maxTEOCopies > 1) {
       for (unsigned int i = 0; i < numTEO; i++) {
-        int numCopies = (firstPhiRegion) ? minTEOCopies : maxTEOCopies; // Special case for the first phi region, PHIA
-        for (unsigned int j = 0; j < numCopies; j++) {
+        for (unsigned int j = 0; j < teoNumCopies[i]; j++) {
           err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(teoMemories[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i), truncation);
         }
-        if (firstPhiRegion && (numCopies < maxTEOCopies)) numCopies++; // Special case for the first phi region, PHIA
-        if (lastPhiRegion && (numCopies > minTEOCopies)) numCopies--; // Special case for the last phi region
       }
     }
   } // end of event loop

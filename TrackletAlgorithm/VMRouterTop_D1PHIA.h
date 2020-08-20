@@ -6,13 +6,19 @@
 // VMRouter Top Function for Disk 1, AllStub region A
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
+// NOTE: To run this VMR, change the following
+//          - the included top function in VMRouter_test.cpp to "#include "VMRouterTop.h""
+//          - the top function in script_VMR.tcl to "add_files ../TrackletAlgorithm/VMRouterTop_D1PHIA.cc -cflags "$CFLAGS""
+
+
 //////////////////////////////////
 // Variables for that are specified with regards to the VMR region
 
 #define kLAYER 0 // Which barrel layer number the data is coming from, 0 if not barrel
 #define kDISK 1 // Which disk number the data is coming from, 0 if not disk
 
-constexpr int phiRegion = 'A'; // Which AllStub/PhiRegion
+constexpr char phiRegion = 'A'; // Which AllStub/PhiRegion
+constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
 constexpr int maxAllCopies(6); // Allstub memory
@@ -20,12 +26,13 @@ constexpr int maxTEICopies(3); // TE Inner memories
 constexpr int maxOLCopies(1); // Can't use 0 even if we don't have any TE Inner Overlap memories
 constexpr int maxTEOCopies(5); // TE Outer memories
 
-constexpr int bendtablesize(8); // Number of entries in each bendcut table
-
 // Number of inputs
 constexpr int numInputs(6); // Input memories
 constexpr int numInputsDiskPS(4);
 constexpr int numInputsDisk2S(numInputs-numInputsDiskPS); // inputType2 inputs
+
+constexpr int bendtablesize(8); // Number of entries in each bendcut table
+
 
 ///////////////////////////////////////////////
 // Variables that don't need manual changing
@@ -33,7 +40,7 @@ constexpr int numInputsDisk2S(numInputs-numInputsDiskPS); // inputType2 inputs
 // Number of VMs
 constexpr int numME = (kLAYER) ? nvmmelayers[kLAYER-1] : nvmmedisks[kDISK-1]; // ME memories
 constexpr int numTEI = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Inner memories
-constexpr int numOL = (kLAYER) ? nvmteoverlaplayers[kLAYER-1] : 0; // TE Inner Overlap memories
+constexpr int numOL = (kLAYER) ? nvmteoverlaplayers[kLAYER-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
 constexpr int numTEO = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Outer memories
 
 // Number of bits used for the bins in VMStubeME memories

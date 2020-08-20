@@ -9,9 +9,10 @@
 // NOTE: to run a different phi region, change the following
 //          - constants specified in VMRouterTop.h
 //          - the directories to the LUTs
-//          - the memory masks
 //          - the call to VMRouter() in VMRouterTop.cc
-//					- and the changes listed in VMRouter_test.cpp
+//          - pragmas?
+//          - the included top function in VMRouter_test.cpp (if file name is changed)
+//          - the top function in script_VMR.tcl (if file name is changed)
 
 
 ////////////////////////////////////////////
@@ -20,7 +21,8 @@
 #define kLAYER 1 // Which barrel layer number the data is coming from, 0 if not barrel
 #define kDISK 0 // Which disk number the data is coming from, 0 if not disk
 
-constexpr int phiRegion = 'E'; // Which AllStub/PhiRegion
+constexpr char phiRegion = 'E'; // Which AllStub/PhiRegion
+constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
 constexpr int maxAllCopies(6); // Allstub memory
@@ -28,12 +30,13 @@ constexpr int maxTEICopies(5); // TE Inner memories
 constexpr int maxOLCopies(3); // TE Inner Overlap memories
 constexpr int maxTEOCopies(1); // Can't use 0 even if we don't have any TE Outer memories
 
-constexpr int bendtablesize(8); // Number of entries in each bendcut table
-
 // Number of inputs
 constexpr int numInputs(4); // Total number of input memories
 constexpr int numInputsDiskPS(0); // Only used for disks
 constexpr int numInputsDisk2S(numInputs-numInputsDiskPS); // Only used for disks
+
+constexpr int bendtablesize(8); // Number of entries in each bendcut table
+
 
 ///////////////////////////////////////////////
 // Variables that don't need manual changing

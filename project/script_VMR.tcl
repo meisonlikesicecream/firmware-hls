@@ -19,12 +19,12 @@ source settings_hls.tcl
 
 # data files
 add_files -tb ../emData/VMR/tables/
-add_files -tb ../emData/VMR/VMR_L1PHIE/
+add_files -tb ../emData/
 
 csim_design -mflags "-j8"
 csynth_design
 cosim_design
-#export_design -format ip_catalog
+export_design -format ip_catalog
 # Adding "-flow impl" runs full Vivado implementation, providing accurate resource use numbers (very slow).
 #export_design -format ip_catalog -flow impl
 
