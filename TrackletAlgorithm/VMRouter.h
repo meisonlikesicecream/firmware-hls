@@ -701,7 +701,7 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 
 	TOPLEVEL: for (auto i = 0; i < MAXVMROUTER; ++i) {
 #pragma HLS PIPELINE II=1
-//#pragma HLS latency max=5
+
 		// Stop processing stubs if we have gone through all data
 		if (!ntotal)
 			continue;

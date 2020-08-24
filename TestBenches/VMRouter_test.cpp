@@ -1,5 +1,5 @@
 // Test bench for VMRouter
-#include "VMRouterTop_D1PHIA.h"
+#include "VMRouterTop.h"
 
 #include <algorithm>
 #include <iterator>
