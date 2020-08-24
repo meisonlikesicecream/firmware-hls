@@ -1,5 +1,5 @@
 // Test bench for VMRouter
-#include "VMRouterTop.h"
+#include "VMRouterTop_D1PHIA.h"
 
 #include <algorithm>
 #include <iterator>
@@ -65,8 +65,9 @@ bool getFileNames(string fileDirStart, string wireFileName, string memID, string
 
 int main() {
 
-  /////////////////////////////////////////////
-  // Get lists of the input/output memory names
+  ////////////////////////////////////////////////////////////////
+  // Get lists of the input/output memory directory and file names
+  // I.e. the names of the test vector files
 
   // Uses wires_hourglass.dat wiring file
   string wireFileName = "emData/wires_hourglass.dat"; // The wiring file name with directory
@@ -84,7 +85,7 @@ int main() {
   string inDir = "InputStubs/InputStubs"; // Directory of InputStubs, including the first part of the file name
   string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
 
-  // Get the input file names and check that the wring file can be opened properly
+  // Get the input file names and check that the wiring file can be opened properly
   if (not getFileNames(testDataDirectory + inDir, wireFileName, inMemID, inNameList, inNumCopies)) return -1;
 
 
