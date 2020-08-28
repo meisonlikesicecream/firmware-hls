@@ -50,19 +50,11 @@ constexpr int numTEO = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; /
 // Number of bits used for the bins in VMStubeME memories
 constexpr int nbitsbin = (kLAYER) ? 3 : 4;
 
-// Which modules the input and output consist of
-#if kDISK > 0
-	constexpr regionType inputType = DISKPS;
-	constexpr regionType outputType = DISK;
+// What regionType the input/output is
+constexpr regionType tmpLayerType = (kLAYER > 3) ? BARREL2S : BARRELPS;
 
-#elif kLAYER > 3
-	constexpr regionType inputType = BARREL2S;
-	constexpr regionType outputType = BARREL2S;
-
-#else
-	constexpr regionType inputType = BARRELPS;
-	constexpr regionType outputType = BARRELPS;
-#endif
+constexpr regionType inputType = (kLAYER) ? tmpLayerType : DISKPS;
+constexpr regionType outputType = (kLAYER) ? tmpLayerType : DISK;
 
 
 /////////////////////////////////////////////////////

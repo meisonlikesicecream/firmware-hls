@@ -22,7 +22,8 @@ const int nevents = 100;  //number of events to run
 // and adds them to the fileNames array with the memory files directory, excluding the copies nX.
 // The number of copies are kept track in the numCopiesArray.
 // E.g. finds all memories that start with "VMSME_L1PHIE", such as "VMSME_L1PHIE17" etc.
-bool getFileNames(string fileDirStart, string wireFileName, string memID, string nameList[], int numCopiesArray[]) {
+template<int arraySize>
+bool getFileNames(string fileDirStart, string wireFileName, string memID, string nameList[arraySize], int numCopiesArray[arraySize]) {
 
   ifstream wireFile; // Will contain the wiring file
 
@@ -45,23 +46,23 @@ bool getFileNames(string fileDirStart, string wireFileName, string memID, string
 
       string tmpMemoryDir = fileDirStart + "_" + inputLine.substr(0, inputLine.find(delimeter)); // The directory and the name of the memory (first part of the line)
 
-      // Add the start of the memory name to the list if we haven't added it before, i.e. no copies
-      if (numCopiesArray[0] == 0) {
-        nameList[numMemories] = tmpMemoryDir;
-        numCopiesArray[numMemories]++;
-        numMemories++;
-      } else if (tmpMemoryDir != nameList[numMemories - 1]) {
+      auto isInNameList = find(nameList, nameList+arraySize, tmpMemoryDir); // Check if tmpMemoryDir is in nameList
+
+      // Add the start of the memory name to the list if we haven't added it before, otherwise increment the number of copies
+      if (isInNameList == nameList+arraySize) {
         nameList[numMemories] = tmpMemoryDir;
         numCopiesArray[numMemories]++;
         numMemories++;
       } else {
-        numCopiesArray[numMemories - 1]++;
+        numCopiesArray[distance(nameList, isInNameList)]++;
       }
     }
   }
 
   return 1;
 }
+
+
 
 int main() {
 
@@ -86,7 +87,7 @@ int main() {
   string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
 
   // Get the input file names and check that the wiring file can be opened properly
-  if (not getFileNames(testDataDirectory + inDir, wireFileName, inMemID, inNameList, inNumCopies)) return -1;
+  if (not getFileNames<numInputs>(testDataDirectory + inDir, wireFileName, inMemID, inNameList, inNumCopies)) return -1;
 
 
   // Start of AllStub file names, excluding the copy number
@@ -100,7 +101,7 @@ int main() {
   string meDir = "VMStubsME/VMStubs"; // Directory of MEStubs, including the first part of the file name
   string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
 
-  getFileNames(testDataDirectory + meDir, wireFileName, meMemID, meNameList, meNumCopies);
+  getFileNames<numME>(testDataDirectory + meDir, wireFileName, meMemID, meNameList, meNumCopies);
 
 
   // Start of TEInnerStub file names, excluding the copy number "nX"
@@ -111,7 +112,7 @@ int main() {
     string teiDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string teiMemID = "VMSTE_" + layerID; // TE Inner memory ID for the specified phi region
 
-    getFileNames(testDataDirectory + teiDir, wireFileName, teiMemID, teiNameList, teiNumCopies);
+    getFileNames<numTEI>(testDataDirectory + teiDir, wireFileName, teiMemID, teiNameList, teiNumCopies);
   }
 
 
@@ -123,19 +124,19 @@ int main() {
     string olDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + specialPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
 
-    getFileNames(testDataDirectory + olDir, wireFileName, olMemID, olNameList, olNumCopies);
+    getFileNames<numOL>(testDataDirectory + olDir, wireFileName, olMemID, olNameList, olNumCopies);
   }
 
 
   // Start of TEOuterStub file names, excluding the copy number "nX"
   string teoNameList[numTEO];
-  int teoNumCopies[numTEO]; // Array containing the number of copies of each memory
+  int teoNumCopies[numTEO] = {0}; // Array containing the number of copies of each memory
 
   if (maxTEOCopies > 1) {
-    string teoDir = "VMStubsTe/VMStubs"; // Directory of MEStubs, including the first part of the file name
-    string teoMemID = (kDISK != 1) ? "VMSTE_" + layerID : "VMSTE_D" + to_string(kLAYER) + "PHI" + specialPhiRegion[phiRegion - 'A']; // TE Outer memory ID for the specified phi region
+    string teoDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string teoMemID = (kDISK != 1) ? "VMSTE_" + layerID : string("VMSTE_D1PHI") + specialPhiRegion[phiRegion - 'A']; // TE Outer memory ID for the specified phi region
 
-    getFileNames(testDataDirectory + teoDir, wireFileName, teoMemID, teoNameList, teoNumCopies);
+    getFileNames<numTEO>(testDataDirectory + teoDir, wireFileName, teoMemID, teoNameList, teoNumCopies);
   }
 
 
@@ -304,6 +305,7 @@ int main() {
     // TE Outer memories
     if (maxTEOCopies > 1) {
       for (unsigned int i = 0; i < numTEO; i++) {
+        cout << teoNumCopies[i] << endl;
         for (unsigned int j = 0; j < teoNumCopies[i]; j++) {
           err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(teoMemories[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i), truncation);
         }
