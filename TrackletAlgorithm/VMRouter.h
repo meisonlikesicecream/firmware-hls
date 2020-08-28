@@ -634,7 +634,7 @@ void VMRouter(const BXType bx, const int finebintable[], const int phicorrtable[
 	// Number of memories/VMs for one coarse phi region
 	constexpr int nvmme = (Layer) ? nvmmelayers[Layer-1] : nvmmedisks[Disk-1]; // ME memories
 	constexpr int nvmte = (Layer) ? nvmtelayers[Layer-1] : nvmtedisks[Disk-1]; // TE memories
-	constexpr int nvmol = ((Layer == 1) || (Layer == 2)) ? nvmteoverlaplayers[Layer-1] : 0; // TE Overlap memories
+	constexpr int nvmol = ((Layer == 1) || (Layer == 2)) ? nvmteoverlaplayers[Layer-1] : 1; // TE Overlap memories
 
 	// Maximum number of stubs that can be processed (memory depth)
 	constexpr int MAXVMROUTER = (Layer) ? kMaxProc - kMaxProcLayerCorr : kMaxProc - kMaxProcDiskCorr; // To get overall latency to 108 for barrel... TODO: find better way to do this
