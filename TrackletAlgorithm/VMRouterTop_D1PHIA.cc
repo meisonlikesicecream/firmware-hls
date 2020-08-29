@@ -211,15 +211,17 @@ void VMRouterTop(BXType bx,
 	constexpr int nvmol = ((kLAYER == 1) || (kLAYER == 2)) ? nvmteoverlaplayers[kLAYER-1] : 0; // TE Overlap memories
 
 	// Masks of which memories that are being used. The first memory is represented by the LSB
-	static const ap_uint<inmasksize> inmask = createMask<inmasksize>('A', numInputs); // Input memories
+	// and a "1" implies that the specified memory is used for this phi region
+	// Create "nvm" 1s, e.g. "1111", shift the mask until it corresponds to the correct phi region
+	static const ap_uint<inmasksize> inmask = ((1 << numInputs) - 1); // Input memories
 	static const ap_uint<memasksize> memask = ((1 << nvmme) - 1) << (nvmme * (phiRegion - 'A')); // ME memories, won't synthesise if I use createMask?!
-	static const ap_uint<teimasksize> teimask = ((kLAYER % 2) || kDISK % 2) ? createMask<teimasksize>(phiRegion, nvmte) : static_cast<ap_uint<teimasksize>>(0x0); // TE Inner memories, only used for odd layers/disk
-	static const ap_uint<olmasksize> olmask = (nvmol) ? createMask<olmasksize>(phiRegion, nvmol) : static_cast<ap_uint<olmasksize>>(0x0); // TE Inner Overlap memories, only used for layer 1 and 2
-	static const ap_uint<teomasksize> teomask = (((kLAYER != 0) && (kLAYER % 2 == 0)) || (kDISK != 0 && kDISK != 3)) ? createMask<teomasksize>(phiRegion, nvmte) : static_cast<ap_uint<teomasksize>>(0x0); // TE Outer memories, only for even layers/disks and disk 1
+	static const ap_uint<teimasksize> teimask = ((kLAYER % 2) || (kDISK % 2)) ? ((1 << nvmte) - 1) << (nvmte * (phiRegion - 'A')) : 0x0; // TE Inner memories, only used for odd layers/disk
+	static const ap_uint<olmasksize> olmask = (nvmol) ? ((1 << nvmol) - 1) << (nvmol * (phiRegion - 'A')) : 0x0; // TE Inner Overlap memories, only used for layer 1 and 2
+	static const ap_uint<teomasksize> teomask = (!((kLAYER % 2) || (kDISK % 2)) || (kDISK == 1)) ? ((1 << nvmte) - 1) << (nvmte * (phiRegion - 'A')) : 0x0; // TE Outer memories, only for even layers/disks and disk 1
 
 
-/////////////////////////
-// Main function
+	/////////////////////////
+	// Main function
 
 	// template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies>
 	VMRouter<inputType, outputType, kLAYER, kDISK,  maxAllCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin, bendtablesize>
@@ -241,31 +243,4 @@ void VMRouterTop(BXType bx,
 		 );
 
 	return;
-}
-
-///////////////////////////////////////////////////////
-// Help functions
-
-// Converts an array of 0s and 1s to an ap_uint
-template<int arraysize>
-inline ap_uint<arraysize> arrayToInt(ap_uint<1> array[arraysize]) {
-	ap_uint<arraysize> number;
-
-	for(int i = 0; i < arraysize; i++) {
-		#pragma HLS unroll
-		number[i] = array[i];
-	}
-
-	return number;
-}
-
-// Creates (memory) masks for a specific phi region with "nvm" VMs.
-// LSB corresponds to the first memory and MSB to the last,
-// a "1" implies that the specified memory is used for this phi region
-template<int masksize>
-inline ap_uint<masksize> createMask(int phi, int nvm) {
-	ap_uint<masksize> mask = (1 << nvm) - 1; // Create "nvm" 1s, e.g. "1111"
-	mask = mask << nvm * (phi - 'A'); // Shift the mask until it corresponds to the correct phi region
-
-	return mask;
 }

@@ -24,7 +24,6 @@ add_files -tb ../emData/
 csim_design -mflags "-j8"
 csynth_design
 cosim_design
-#-trace_level all -tool modelsim -compiled_library_dir /home/ppd/ceo15647/.xilinx_sim_libs/2019.2/questasim_10.7c/
 export_design -format ip_catalog
 # Adding "-flow impl" runs full Vivado implementation, providing accurate resource use numbers (very slow).
 #export_design -format ip_catalog -flow impl

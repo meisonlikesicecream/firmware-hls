@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const int nevents = 100;  //number of events to run
+const int nevents = 1;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -288,7 +288,7 @@ int main() {
     if (maxTEICopies > 1) {
       for (unsigned int i = 0; i < numTEI; i++) {
         for (unsigned int j = 0; j < teiNumCopies[i]; j++) {
-          err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(teiMemories[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i), truncation);
+          err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(teiMemories[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i) + "n" + to_string(j+1), truncation);
         }
       }
     }
@@ -297,7 +297,7 @@ int main() {
     if (maxOLCopies > 1) {
       for (unsigned int i = 0; i < numOL; i++) {
         for (unsigned int j = 0; j < olNumCopies[i]; j++) {
-          err += compareMemWithFile<VMStubTEInnerMemory<BARRELOL>>(olMemories[i][j], fout_vmstubteol[i][j], ievt, "VMStubTEOverlap" + to_string(i), truncation);
+          err += compareMemWithFile<VMStubTEInnerMemory<BARRELOL>>(olMemories[i][j], fout_vmstubteol[i][j], ievt, "VMStubTEOverlap" + to_string(i) + "n" + to_string(j+1), truncation);
         }
       }
     }
@@ -305,9 +305,8 @@ int main() {
     // TE Outer memories
     if (maxTEOCopies > 1) {
       for (unsigned int i = 0; i < numTEO; i++) {
-        cout << teoNumCopies[i] << endl;
         for (unsigned int j = 0; j < teoNumCopies[i]; j++) {
-          err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(teoMemories[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i), truncation);
+          err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(teoMemories[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i) + "n" + to_string(j+1), truncation);
         }
       }
     }

@@ -88,17 +88,4 @@ void VMRouterTop(BXType bx,
 	VMStubMEMemory<outputType, nbitsbin> meMemories[numME]
 	);
 
-
-
-///////////////////////////////////////////////////////
-// Help functions
-
-// Converts an array of 0s and 1s to an ap_uint
-template<int arraysize>
-inline ap_uint<arraysize> arrayToInt(ap_uint<1> array[arraysize]);
-
-// Creates (memory) masks for a specific phi region with "nvm" VMs
-template<int masksize>
-inline ap_uint<masksize> createMask(int phi, int nvm);
-
 #endif // TrackletAlgorithm_VMRouterTop_h

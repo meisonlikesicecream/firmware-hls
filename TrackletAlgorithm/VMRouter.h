@@ -104,6 +104,20 @@ constexpr int maxrz = (1 << maxrzbits) - 1; // Anything above this value would c
 //////////////////////////////////////
 // Functions used by the VMR
 
+
+// Converts an array of 0s and 1s to an ap_uint
+template<int arraysize>
+inline ap_uint<arraysize> arrayToInt(ap_uint<1> array[arraysize]) {
+	ap_uint<arraysize> number;
+
+	for(int i = 0; i < arraysize; i++) {
+		#pragma HLS unroll
+		number[i] = array[i];
+	}
+
+	return number;
+}
+
 // Returns top 5 (nmaxvmbits) bits of phi, i.e. max 31 in decimal
 template<regionType InType>
 inline ap_uint<nmaxvmbits> iphivmRaw(const typename AllStub<InType>::ASPHI phi) {
