@@ -95,10 +95,6 @@ constexpr int maskTEIsize = 1 << nmaxvmbits; // TEInner memories
 constexpr int maskOLsize = 1 << nmaxvmolbits; // TEInner Overlap memories
 constexpr int maskTEOsize = 1 << nmaxvmbits; // TEOuter memories
 
-// Correction/reduction constants to make the overall II = 108
-constexpr int loopReductionLayer = 5;
-constexpr int loopReductionDisk = 6;
-
 
 //////////////////////////////////////
 // Functions used by the VMR
@@ -651,69 +647,72 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 	constexpr int nvmTE = (Layer) ? nvmtelayers[Layer-1] : nvmtedisks[Disk-1]; // TE memories
 	constexpr int nvmOL = ((Layer == 1) || (Layer == 2)) ? nvmollayers[Layer-1] : 0; // TE Overlap memories
 
-	// Maximum number of stubs that can be processed (memory depth)
-	constexpr int kMaxProcVMR = (Layer) ? kMaxProc - loopReductionLayer : kMaxProc - loopReductionDisk; // To get overall latency to 108 for barrel... TODO: find better way to do this
-
-
-	// Reset address counters in output memories
-	// Only clear if the masks says that memory is used
-	static const ap_uint<MaxAllCopies> maskAS = (1 << MaxAllCopies) - 1; // Binary number corresponding to 'MaxAllCopies' of 1s
-	clear1DMemoryArray(bx, MaxAllCopies, maskAS, 0, memoriesAS);
-
-	if (maskME) {
-		clear1DMemoryArray(bx, nvmME, maskME, firstME, memoriesME);
-	}
-	if (maskTEI) {
-		clear2DMemoryArray<MaxTEICopies>(bx, nvmTE, maskTEI, firstTE, memoriesTEI);
-	}
-	if (maskTEO) {
-		clear2DMemoryArray<MaxTEOCopies>(bx, nvmTE, maskTEO, firstTE, memoriesTEO);
-	}
-	if (maskOL) {
-		clear2DMemoryArray<MaxOLCopies>(bx, nvmOL, maskOL, firstOL, memoriesOL);
-	}
-
-
 	// Create variables that keep track of which memory address to read and write to
 	ap_uint<kNBits_MemAddr> read_addr(0); // Reading of input stubs
-
 	int addrCountTEI[nvmTE][MaxTEICopies]; // Writing of TE Inner stubs
-	if (maskTEI) {
-		clear2DArray<MaxTEICopies>(nvmTE, addrCountTEI);
-	}
-
 	int addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
-	if (maskOL) {
-		clear2DArray<MaxOLCopies>(nvmOL, addrCountOL);
-	}
-
 
 	// Number of data in each input memory
+	ap_uint<kNBits_MemAddr> nTotal = 0; // Total number of inputs
 	typename InputStubMemory<InType>::NEntryT nInputs[maskISsize]; // Array containing the number of inputs. Last two indices are for DISK2S
 	#pragma HLS array_partition variable=nInputs complete dim=0
 
 	const typename InputStubMemory<InType>::NEntryT zero(0);
 
-	ap_uint<7> nTotal = 0; // Total number of inputs
 
-	for (int i = 0; i < maskISsize; i++) {
+	/////////////////////////////////////
+	// Main Loop
+
+	TOPLEVEL: for (auto i = -1; i < kMaxProc - 1; ++i) {
+#pragma HLS PIPELINE II=1 rewind
+
+		// Only for the first loop iteration, no stub processed:
+		// - Clear all memories and counters
+		// - Calculate the number of entries in the input memories
+		// Allows the TOPLEVEL loop to use REWIND and process kMaxProc - 1 stubs
+		if (i == -1) {
+
+			// Reset address counters in output memories
+			// Only clear if the masks says that memory is used
+			static const ap_uint<MaxAllCopies> maskAS = (1 << MaxAllCopies) - 1; // Binary number corresponding to 'MaxAllCopies' of 1s
+			clear1DMemoryArray(bx, MaxAllCopies, maskAS, 0, memoriesAS);
+
+			if (maskME) {
+				clear1DMemoryArray(bx, nvmME, maskME, firstME, memoriesME);
+			}
+			if (maskTEI) {
+				clear2DMemoryArray<MaxTEICopies>(bx, nvmTE, maskTEI, firstTE, memoriesTEI);
+			}
+			if (maskTEO) {
+				clear2DMemoryArray<MaxTEOCopies>(bx, nvmTE, maskTEO, firstTE, memoriesTEO);
+			}
+			if (maskOL) {
+				clear2DMemoryArray<MaxOLCopies>(bx, nvmOL, maskOL, firstOL, memoriesOL);
+			}
+
+			// Set all address counters to 0
+			if (maskTEI) {
+				clear2DArray<MaxTEICopies>(nvmTE, addrCountTEI);
+			}
+			if (maskOL) {
+				clear2DArray<MaxOLCopies>(nvmOL, addrCountOL);
+			}
+
+			// Number of data in each input memory
+			for (int j = 0; j < maskISsize; j++) {
 #pragma HLS UNROLL
-		ap_uint<7> tmp;
-		if (i < 4) {
-			tmp = maskIS[i] != 0 ? inputStubs[i].getEntries(bx) : zero;
-		} else { // For DISK2S
-			tmp = maskIS[i] != 0 ? inputStubsDisk2S[i-4].getEntries(bx) : zero;
+				ap_uint<kNBits_MemAddr> tmp;
+				if (j < 4) {
+					tmp = maskIS[j] != 0 ? inputStubs[j].getEntries(bx) : zero;
+				} else { // For DISK2S
+					tmp = maskIS[j] != 0 ? inputStubsDisk2S[j-4].getEntries(bx) : zero;
+				}
+				nInputs[j] = tmp;
+				nTotal += tmp;
+			}
+
+			continue;
 		}
-		nInputs[i] = tmp;
-		nTotal += tmp;
-	}
-
-
-/////////////////////////////////////
-// Main Loop
-
-	TOPLEVEL: for (auto i = 0; i < kMaxProcVMR; ++i) {
-#pragma HLS PIPELINE II=1
 
 		// Stop processing stubs if we have gone through all data
 		if (!nTotal)
@@ -776,8 +775,8 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			++read_addr;
 
 
-////////////////////////////////////////
-// AllStub memories
+		////////////////////////////////////////
+		// AllStub memories
 
 		AllStub<OutType> allstub =
 				(disk2S) ? stubDisk2S.raw() : stub.raw();
@@ -794,8 +793,8 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 #endif // DEBUG
 
 
-/////////////////////////////////////////////
-// ME memories
+		/////////////////////////////////////////////
+		// ME memories
 
 		if (maskME != 0) {
 
@@ -838,9 +837,8 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		} // End ME memories
 
 
-
-//////////////////////////////////
-// TE Inner Memories
+		//////////////////////////////////
+		// TE Inner Memories
 
 		// No stubs for DISK2S
 		if ((maskTEI != 0) && (!disk2S)) {
@@ -882,8 +880,9 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			}
 		} // End TE Inner memories
 
-////////////////////////////////////
-// TE Outer memories
+
+		////////////////////////////////////
+		// TE Outer memories
 
 		if ((maskTEO != 0) && (!disk2S)) {
 
@@ -918,8 +917,8 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		} // End TE Outer memories
 
 
-/////////////////////////////////////
-// OVERLAP Memories
+		/////////////////////////////////////
+		// OVERLAP Memories
 
 		if (maskOL != 0) {
 
