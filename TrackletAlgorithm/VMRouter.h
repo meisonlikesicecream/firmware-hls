@@ -83,7 +83,7 @@ constexpr int maxrz = (1 << maxrzbits) - 1; // Anything above this value would c
 constexpr int nmaxvmbits = 5; // Maximum number of bits used for the VM number, i.e. 32
 constexpr int nmaxvmolbits = 4; // Overlap
 
-constexpr float maxvmbins = 1 << nmaxvmbits; // How many bins nmaxvmbits would correspond to
+constexpr float maxvmbins = 1 << nmaxvmbits; // How many bins maxvmbits would correspond to
 constexpr float maxvmolbins = 1 << nmaxvmolbits; // Overlap
 
 constexpr int nphibitsraw = 7; // Number of bits used for calculating iPhiRawPlus/Minus
@@ -230,9 +230,9 @@ void clear2DMemoryArray(const BXType bx, const int nvm, const MaskType mask, con
 	}
 }
 
-// Clears a 2D array of ints by setting everything to 0
+// Clears a 2D array of ap_uints by setting everything to 0
 template<int MaxCopies>
-void clear2DArray(int nvm, int array[][MaxCopies]) {
+void clear2DArray(int nvm, ap_uint<kNBits_MemAddr> array[][MaxCopies]) {
 #pragma HLS inline
 #pragma HLS array_partition variable=array complete dim=0
 	for (int i = 0; i < nvm; i++) {
@@ -407,8 +407,8 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 	} else { // Disk
 		assert(Disk != 0);
 
-		constexpr int zBins = (1 << nzbitsinnertabledisk); // Number of bins in z
-		constexpr int rBins = (1 << nrbitsinnertabledisk); // Number of bins in r
+		constexpr auto zBins = (1 << nzbitsinnertabledisk); // Number of bins in z
+		constexpr auto rBins = (1 << nrbitsinnertabledisk); // Number of bins in r
 		ap_uint<nzbitsinnertabledisk> zBin = (z + (1 << (nzBits - 1)))
 				>> (nzBits - nzbitsinnertabledisk); // Make z positive and take the 7 (nzbitsinnertabledisk) MSBs
 		ap_uint<nrbitsinnertabledisk> rBin = r
@@ -520,7 +520,7 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 		// Find the VM bit information in rzbits LUT
 		// First 2 MSB is the binning in r, and the 3 LSB is the fine r within a bin
 		auto rzbitsIndex = rBin * zBins + zBin; // Index for LUT
-		ap_uint<nmaxvmbits> rzbits = rzbitsOuterTable[rzbitsIndex];
+		auto rzbits = rzbitsOuterTable[rzbitsIndex];
 
 		bin = rzbits >> nfinerzbits; // Remove the 3 LSBs, i.e. the finebin bits
 
@@ -638,9 +638,9 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 
 
 	// The first memory numbers, the position of the first non-zero bit in the mask
-	static const int firstME = firstMemNumber(maskME); // ME memory
-	static const int firstTE = (maskTEI) ? firstMemNumber(maskTEI) : firstMemNumber(maskTEO); // TE memory
-	static const int firstOL = (maskOL) ? static_cast<int>(firstMemNumber(maskOL)) : 0; // TE Overlap memory
+	static const ap_uint<nmaxvmbits> firstME = firstMemNumber(maskME); // ME memory
+	static const ap_uint<nmaxvmbits> firstTE = (maskTEI) ? firstMemNumber(maskTEI) : firstMemNumber(maskTEO); // TE memory
+	static const ap_uint<nmaxvmolbits> firstOL = (maskOL) ? firstMemNumber(maskOL) : static_cast<ap_uint<nmaxvmbits>>(0); // TE Overlap memory
 
 	// Number of memories/VMs for one coarse phi region
 	constexpr int nvmME = (Layer) ? nvmmelayers[Layer-1] : nvmmedisks[Disk-1]; // ME memories
@@ -649,8 +649,8 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 
 	// Create variables that keep track of which memory address to read and write to
 	ap_uint<kNBits_MemAddr> read_addr(0); // Reading of input stubs
-	int addrCountTEI[nvmTE][MaxTEICopies]; // Writing of TE Inner stubs
-	int addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
+	ap_uint<kNBits_MemAddr> addrCountTEI[nvmTE][MaxTEICopies]; // Writing of TE Inner stubs
+	ap_uint<kNBits_MemAddr> addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
 
 	// Number of data in each input memory
 	ap_uint<kNBits_MemAddr> nTotal = 0; // Total number of inputs
