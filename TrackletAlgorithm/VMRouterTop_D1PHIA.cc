@@ -12,7 +12,6 @@ void VMRouterTop(BXType bx,
 	// Input memories
 	const InputStubMemory<inputType> inputStub[numInputs],
 	const InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S], // Only disks has 2S modules
-
 	// Output memories
 	AllStubMemory<outputType> memoriesAS[maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[numME],
@@ -47,7 +46,7 @@ void VMRouterTop(BXType bx,
 	// LUT with the Z/R bits for TE Overlap memories
 	// Only used for Layer 1 and 2, and Disk 1
 	// Indexed using z and r position bits
-	static const int rzbitsextratable[] = // 10 bits used for LUT
+	static const int rzbitsextratable[] = // 11 bits used for LUT
 #include "../emData/VMR/tables/VMTableOuterD1.tab" // Only for Layer 1
 
 
@@ -63,6 +62,7 @@ void VMRouterTop(BXType bx,
 #include "../emData/VMR/tables/VMSTE_D1PHIA1n2_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable1_n3[bendCutTableSize] = {0};
+
 
 	// TE Memory 2
 	ap_uint<1> tmpBendTable2_n1[] =
@@ -118,6 +118,7 @@ void VMRouterTop(BXType bx,
 
 	ap_uint<1> tmpBendExtraTable1_n5[bendCutTableSize] = {0};
 
+
 	// TE Overlap Memory 2
 	ap_uint<1> tmpBendExtraTable2_n1[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIX2n1_vmbendcut.tab"
@@ -131,7 +132,8 @@ void VMRouterTop(BXType bx,
 	ap_uint<1> tmpBendExtraTable2_n4[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIX2n4_vmbendcut.tab"
 
-	ap_uint<1> tmpBendExtraTable2_n5[bendCutTableSize] = {0};
+	ap_uint<1> tmpBendExtraTable2_n5[bendCutTableSize] =
+#include "../emData/VMR/tables/VMSTE_D1PHIX2n5_vmbendcut.tab"
 
 	// TE Overlap Memory 3
 	ap_uint<1> tmpBendExtraTable3_n1[] =
