@@ -20,20 +20,20 @@
 // Variables for that are specified with regards to the VMR region
 // Changed manually
 
-#define kLAYER 1 // Which barrel layer number the data is coming from, 0 if not barrel
+#define kLAYER 2 // Which barrel layer number the data is coming from, 0 if not barrel
 #define kDISK 0 // Which disk number the data is coming from, 0 if not disk
 
-constexpr char phiRegion = 'E'; // Which AllStub/PhiRegion
+constexpr char phiRegion = 'D'; // Which AllStub/PhiRegion
 constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
-constexpr int maxASCopies(6); // Allstub memory
-constexpr int maxTEICopies(5); // TE Inner memories
-constexpr int maxOLCopies(3); // TE Inner Overlap memories
-constexpr int maxTEOCopies(1); // Can't use 0 even if we don't have any TE Outer memories
+constexpr int maxASCopies(7); // Allstub memory
+constexpr int maxTEICopies(1); // TE Inner memories
+constexpr int maxOLCopies(4); // TE Inner Overlap memories
+constexpr int maxTEOCopies(5); // Can't use 0 even if we don't have any TE Outer memories
 
 // Number of inputs
-constexpr int numInputs(4); // Total number of input memories
+constexpr int numInputs(2); // Total number of input memories
 constexpr int numInputsDiskPS(0); // Only used for disks
 constexpr int numInputsDisk2S(numInputs-numInputsDiskPS); // Only used for disks
 
@@ -70,8 +70,8 @@ void VMRouterTop(BXType bx,
 	// Output memories
 	AllStubMemory<outputType> allStub[maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[numME],
-	VMStubTEInnerMemory<outputType> memoriesTEI[numTEI][maxTEICopies],
-	VMStubTEInnerMemory<BARRELOL> memoriesOL[numOL][maxOLCopies]
+	VMStubTEInnerMemory<BARRELOL> memoriesOL[numOL][maxOLCopies],
+	VMStubTEOuterMemory<outputType> memoriesTEO[numTEI][maxTEOCopies]
 	);
 
 #endif // TrackletAlgorithm_VMRouterTop_h

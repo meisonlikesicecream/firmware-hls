@@ -4,46 +4,76 @@
 #include "VMRouter.h"
 
 // VMRouter Top Function for Disk 1, AllStub region A
+// Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
+
+// NOTE: To run this VMR, change the following
+//          - the included top function in VMRouter_test.cpp to "#include "VMRouterTop.h""
+//          - the top function in script_VMR.tcl to "add_files ../TrackletAlgorithm/VMRouterTop_D1PHIA.cc -cflags "$CFLAGS""
+
 
 //////////////////////////////////
 // Variables for that are specified with regards to the VMR region
 
-constexpr int layer(0); // Which barrel layer number the data is coming from, 0 if not barrel
-constexpr int disk(1); // Which disk number the data is coming from, 0 if not disk
+#define kLAYER 0 // Which barrel layer number the data is coming from, 0 if not barrel
+#define kDISK 1 // Which disk number the data is coming from, 0 if not disk
 
-// Which modules the input and output consist of
-constexpr regionType inputType = DISKPS; // Could be determined from the layer/disk
-constexpr regionType inputType2 = DISK2S;
-constexpr regionType outputType = DISK;
+constexpr char phiRegion = 'A'; // Which AllStub/PhiRegion
+constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
-constexpr int maxAllCopies(6); // Allstub memory
+constexpr int maxASCopies(6); // Allstub memory
 constexpr int maxTEICopies(3); // TE Inner memories
 constexpr int maxOLCopies(1); // Can't use 0 even if we don't have any TE Inner Overlap memories
 constexpr int maxTEOCopies(5); // TE Outer memories
 
-// Number of VMs.
+// Number of inputs
 constexpr int numInputs(6); // Input memories
 constexpr int numInputsDiskPS(4);
 constexpr int numInputsDisk2S(numInputs-numInputsDiskPS); // inputType2 inputs
 
-constexpr int numME = (layer) ? nvmmelayers[layer-1] : nvmmedisks[disk-1]; // ME memories
-constexpr int numTEI = (layer) ? nvmtelayers[layer-1] : nvmtedisks[disk-1]; // TE Inner memories
-constexpr int numOL = (layer) ? nvmteoverlaplayers[layer-1] : 0; // TE Inner Overlap memories
-constexpr int numTEO = (layer) ? nvmtelayers[layer-1] : nvmtedisks[disk-1]; // TE Outer memories
+constexpr int bendCutTableSize(8); // Number of entries in each bendcut table
+
+
+///////////////////////////////////////////////
+// Variables that don't need manual changing
+
+// Number of VMs
+constexpr int numME = (kLAYER) ? nvmmelayers[kLAYER-1] : nvmmedisks[kDISK-1]; // ME memories
+constexpr int numTEI = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Inner memories
+constexpr int numOL = (kLAYER) ? nvmollayers[kLAYER-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
+constexpr int numTEO = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Outer memories
 
 // Number of bits used for the bins in VMStubeME memories
-constexpr int nbitsbin = (layer) ? 3 : 4;
+constexpr int nbitsbin = (kLAYER) ? 3 : 4;
+
+// Which modules the input and output consist of
+#if kDISK > 0
+	constexpr regionType inputType = DISKPS;
+	constexpr regionType outputType = DISK;
+
+#elif kLAYER > 3
+	constexpr regionType inputType = BARREL2S;
+	constexpr regionType outputType = BARREL2S;
+
+#else
+	constexpr regionType inputType = BARRELPS;
+	constexpr regionType outputType = BARRELPS;
+#endif
+
+
+/////////////////////////////////////////////////////
+// VMRouter Top Function
 
 void VMRouterTop(BXType bx,
 	// Input memories
-	const InputStubMemory<inputType> inputStub[numInputsDiskPS],
-	const InputStubMemory<inputType2> inputStubDisk2S[numInputsDisk2S],
+	const InputStubMemory<inputType> inputStub[numInputs],
+	const InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S], // Only disks has 2S modules
+
 	// Output memories
-	AllStubMemory<outputType> allStub[maxAllCopies],
-	VMStubMEMemory<outputType, nbitsbin> meMemories[numME],
-	VMStubTEInnerMemory<outputType> teiMemories[numTEI][maxTEICopies],
-	VMStubTEOuterMemory<outputType> teoMemories[numTEO][maxTEOCopies]
+	AllStubMemory<outputType> allStub[maxASCopies],
+	VMStubMEMemory<outputType, nbitsbin> memoriesME[numME],
+	VMStubTEInnerMemory<outputType> memoriesTEI[numTEI][maxTEICopies],
+	VMStubTEOuterMemory<outputType> memoriesTEO[numTEO][maxTEOCopies]
 	);
 
-#endif // TrackletAlgorithm_VMRouterTop_D1PHIA_h
+#endif // TrackletAlgorithm_VMRouterTop_h

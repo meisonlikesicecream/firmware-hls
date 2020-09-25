@@ -1,4 +1,4 @@
-#include "VMRouterTop.h"
+#include "VMRouterTop_L2PHID.h"
 
 // VMRouter Top Function for layer 1, AllStub region E
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -20,8 +20,8 @@ void VMRouterTop(BXType bx,
 	// Output memories
 	AllStubMemory<outputType> memoriesAS[maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[numME],
-	VMStubTEInnerMemory<outputType> memoriesTEI[numTEI][maxTEICopies],
-	VMStubTEInnerMemory<BARRELOL> memoriesOL[numOL][maxOLCopies])
+	VMStubTEInnerMemory<BARRELOL> memoriesOL[numOL][maxOLCopies],
+	VMStubTEOuterMemory<outputType> memoriesTEO[numTEI][maxTEOCopies])
  {
 
 
@@ -33,28 +33,28 @@ void VMRouterTop(BXType bx,
 	// Includes both coarse r/z position (bin), and finer region each r/z bin is divided into.
 	// Indexed using r and z position bits
 	static const int fineBinTable[] =
-#include "../emData/VMR/tables/VMR_L1PHIE_finebin.tab"
+#include "../emData/LUTs/VMR_L2PHID_finebin.tab"
 
 
 	// LUT with phi corrections to project the stub to the average radius in a layer.
 	// Only used by layers.
 	// Indexed using phi and bend bits
 	static const int phiCorrTable[] =
-#include "../emData/VMR/tables/VMPhiCorrL1.tab"
+#include "../emData/LUTs/VMPhiCorrL2.tab"
 
 
 	// LUT with the Z/R bits for TE memories
 	// Contain information about where in z to look for valid stub pairs
 	// Indexed using z and r position bits
 	static const int rzbitstable[] =
-#include "../emData/VMR/tables/VMTableInnerL1L2.tab"
+#include "../emData/LUTs/VMTableOuterL2.tab"
 
 
 	// LUT with the Z/R bits for TE Overlap memories
 	// Only used for layer 1 and 2, and disk 1
 	// Indexed using z and r position bits
-	static const int rzbitsextratable[ ] = // 11 bits used for LUT
-#include "../emData/VMR/tables/VMTableInnerL1D1.tab"
+	static const int rzbitsextratable[] = // 11 bits used for LUT
+#include "../emData/LUTs/VMTableInnerL2D1.tab"
 
 
 	// LUT with bend-cuts for the TE memories
@@ -63,106 +63,175 @@ void VMRouterTop(BXType bx,
 
 	// TE Memory 1
 	ap_uint<1> tmpBendTable1_n1[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE17n1_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID25n1_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable1_n2[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE17n2_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID25n2_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable1_n3[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE17n3_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID25n3_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable1_n4[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE17n4_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID25n4_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable1_n5[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE17n5_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID25n5_vmbendcut.tab"
 
 	// TE Memory 2
 	ap_uint<1> tmpBendTable2_n1[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE18n1_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID26n1_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable2_n2[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE18n2_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID26n2_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable2_n3[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE18n3_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID26n3_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable2_n4[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE18n4_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID26n4_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable2_n5[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE18n5_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID26n5_vmbendcut.tab"
 
 	// TE Memory 3
 	ap_uint<1> tmpBendTable3_n1[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE19n1_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID27n1_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable3_n2[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE19n2_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID27n2_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable3_n3[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE19n3_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID27n3_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable3_n4[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE19n4_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID27n4_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable3_n5[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE19n5_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID27n5_vmbendcut.tab"
 
 // TE Memory 4
 	ap_uint<1> tmpBendTable4_n1[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE20n1_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID28n1_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable4_n2[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE20n2_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID28n2_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable4_n3[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE20n3_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID28n3_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable4_n4[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE20n4_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID28n4_vmbendcut.tab"
 
 	ap_uint<1> tmpBendTable4_n5[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIE20n5_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHID28n5_vmbendcut.tab"
+
+// TE Memory 5
+ap_uint<1> tmpBendTable5_n1[] =
+#include "../emData/LUTs/VMSTE_L2PHID29n1_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable5_n2[] =
+#include "../emData/LUTs/VMSTE_L2PHID29n2_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable5_n3[] =
+#include "../emData/LUTs/VMSTE_L2PHID29n3_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable5_n4[] =
+#include "../emData/LUTs/VMSTE_L2PHID29n4_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable5_n5[] =
+#include "../emData/LUTs/VMSTE_L2PHID29n5_vmbendcut.tab"
+
+// TE Memory 6
+ap_uint<1> tmpBendTable6_n1[] =
+#include "../emData/LUTs/VMSTE_L2PHID30n1_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable6_n2[] =
+#include "../emData/LUTs/VMSTE_L2PHID30n2_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable6_n3[] =
+#include "../emData/LUTs/VMSTE_L2PHID30n3_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable6_n4[] =
+#include "../emData/LUTs/VMSTE_L2PHID30n4_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable6_n5[] =
+#include "../emData/LUTs/VMSTE_L2PHID30n5_vmbendcut.tab"
+
+// TE Memory 7
+ap_uint<1> tmpBendTable7_n1[] =
+#include "../emData/LUTs/VMSTE_L2PHID31n1_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable7_n2[] =
+#include "../emData/LUTs/VMSTE_L2PHID31n2_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable7_n3[] =
+#include "../emData/LUTs/VMSTE_L2PHID31n3_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable7_n4[] =
+#include "../emData/LUTs/VMSTE_L2PHID31n4_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable7_n5[bendCutTableSize] = {0};
+
+// TE Memory 8
+ap_uint<1> tmpBendTable8_n1[] =
+#include "../emData/LUTs/VMSTE_L2PHID32n1_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable8_n2[] =
+#include "../emData/LUTs/VMSTE_L2PHID32n2_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable8_n3[] =
+#include "../emData/LUTs/VMSTE_L2PHID32n3_vmbendcut.tab"
+
+ap_uint<1> tmpBendTable8_n4[bendCutTableSize] = {0};
+
+ap_uint<1> tmpBendTable8_n5[bendCutTableSize] = {0};
+
 
 	// Combine all the temporary tables into one big table
 	static const ap_uint<bendCutTableSize> bendCutTable[] = {
 		arrayToInt<bendCutTableSize>(tmpBendTable1_n1), arrayToInt<bendCutTableSize>(tmpBendTable1_n2), arrayToInt<bendCutTableSize>(tmpBendTable1_n3), arrayToInt<bendCutTableSize>(tmpBendTable1_n4), arrayToInt<bendCutTableSize>(tmpBendTable1_n5),
 		arrayToInt<bendCutTableSize>(tmpBendTable2_n1), arrayToInt<bendCutTableSize>(tmpBendTable2_n2), arrayToInt<bendCutTableSize>(tmpBendTable2_n3), arrayToInt<bendCutTableSize>(tmpBendTable2_n4), arrayToInt<bendCutTableSize>(tmpBendTable2_n5),
 		arrayToInt<bendCutTableSize>(tmpBendTable3_n1), arrayToInt<bendCutTableSize>(tmpBendTable3_n2), arrayToInt<bendCutTableSize>(tmpBendTable3_n3), arrayToInt<bendCutTableSize>(tmpBendTable3_n4), arrayToInt<bendCutTableSize>(tmpBendTable3_n5),
-		arrayToInt<bendCutTableSize>(tmpBendTable4_n1), arrayToInt<bendCutTableSize>(tmpBendTable4_n2), arrayToInt<bendCutTableSize>(tmpBendTable4_n3), arrayToInt<bendCutTableSize>(tmpBendTable4_n4), arrayToInt<bendCutTableSize>(tmpBendTable4_n5)};
+		arrayToInt<bendCutTableSize>(tmpBendTable4_n1), arrayToInt<bendCutTableSize>(tmpBendTable4_n2), arrayToInt<bendCutTableSize>(tmpBendTable4_n3), arrayToInt<bendCutTableSize>(tmpBendTable4_n4), arrayToInt<bendCutTableSize>(tmpBendTable4_n5),
+		arrayToInt<bendCutTableSize>(tmpBendTable5_n1), arrayToInt<bendCutTableSize>(tmpBendTable5_n2), arrayToInt<bendCutTableSize>(tmpBendTable5_n3), arrayToInt<bendCutTableSize>(tmpBendTable5_n4), arrayToInt<bendCutTableSize>(tmpBendTable5_n5),
+		arrayToInt<bendCutTableSize>(tmpBendTable6_n1), arrayToInt<bendCutTableSize>(tmpBendTable6_n2), arrayToInt<bendCutTableSize>(tmpBendTable6_n3), arrayToInt<bendCutTableSize>(tmpBendTable6_n4), arrayToInt<bendCutTableSize>(tmpBendTable6_n5),
+		arrayToInt<bendCutTableSize>(tmpBendTable7_n1), arrayToInt<bendCutTableSize>(tmpBendTable7_n2), arrayToInt<bendCutTableSize>(tmpBendTable7_n3), arrayToInt<bendCutTableSize>(tmpBendTable7_n4), arrayToInt<bendCutTableSize>(tmpBendTable7_n5),
+		arrayToInt<bendCutTableSize>(tmpBendTable8_n1), arrayToInt<bendCutTableSize>(tmpBendTable8_n2), arrayToInt<bendCutTableSize>(tmpBendTable8_n3), arrayToInt<bendCutTableSize>(tmpBendTable8_n4), arrayToInt<bendCutTableSize>(tmpBendTable8_n5)};
 
 
 	// TE Overlap Memory 1
 	ap_uint<1> tmpBendExtraTable1_n1[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIQ9n1_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHIW7n1_vmbendcut.tab"
 
 	ap_uint<1> tmpBendExtraTable1_n2[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIQ9n2_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHIW7n2_vmbendcut.tab"
 
 	ap_uint<1> tmpBendExtraTable1_n3[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIQ9n3_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHIW7n3_vmbendcut.tab"
+
+	ap_uint<1> tmpBendExtraTable1_n4[] =
+#include "../emData/LUTs/VMSTE_L2PHIW7n4_vmbendcut.tab"
 
 	// TE Overlap Memory 2
 	ap_uint<1> tmpBendExtraTable2_n1[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIQ10n1_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHIW8n1_vmbendcut.tab"
 
 	ap_uint<1> tmpBendExtraTable2_n2[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIQ10n2_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHIW8n2_vmbendcut.tab"
 
 	ap_uint<1> tmpBendExtraTable2_n3[] =
-#include "../emData/VMR/tables/VMSTE_L1PHIQ10n3_vmbendcut.tab"
+#include "../emData/LUTs/VMSTE_L2PHIW8n3_vmbendcut.tab"
+
+	ap_uint<1> tmpBendExtraTable2_n4[bendCutTableSize] = {0};
 
 	// Combine all the temporary extra tables into one big table
 	static const ap_uint<bendCutTableSize> bendCutExtraTable[] = {
-		arrayToInt<bendCutTableSize>(tmpBendExtraTable1_n1), arrayToInt<bendCutTableSize>(tmpBendExtraTable1_n2), arrayToInt<bendCutTableSize>(tmpBendExtraTable1_n3),
-		arrayToInt<bendCutTableSize>(tmpBendExtraTable2_n1), arrayToInt<bendCutTableSize>(tmpBendExtraTable2_n2), arrayToInt<bendCutTableSize>(tmpBendExtraTable2_n3)};
+		arrayToInt<bendCutTableSize>(tmpBendExtraTable1_n1), arrayToInt<bendCutTableSize>(tmpBendExtraTable1_n2), arrayToInt<bendCutTableSize>(tmpBendExtraTable1_n3), arrayToInt<bendCutTableSize>(tmpBendExtraTable1_n4),
+		arrayToInt<bendCutTableSize>(tmpBendExtraTable2_n1), arrayToInt<bendCutTableSize>(tmpBendExtraTable2_n2), arrayToInt<bendCutTableSize>(tmpBendExtraTable2_n3), arrayToInt<bendCutTableSize>(tmpBendExtraTable2_n4)};
 
 // Takes 2 clock cycles before on gets data, used at high frequencies
 #pragma HLS resource variable=inputStub[0].get_mem() latency=2
 #pragma HLS resource variable=inputStub[1].get_mem() latency=2
-#pragma HLS resource variable=inputStub[2].get_mem() latency=2
-#pragma HLS resource variable=inputStub[3].get_mem() latency=2
 
 #pragma HLS resource variable=fineBinTable latency=2
 #pragma HLS resource variable=rzbitstable latency=2
@@ -194,8 +263,8 @@ void VMRouterTop(BXType bx,
 
 	VMRouter<inputType, outputType, kLAYER, kDISK,  maxASCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin, bendCutTableSize>
 	(bx, fineBinTable, phiCorrTable,
-		rzbitstable, rzbitsextratable, nullptr,
-		bendCutTable, bendCutExtraTable, nullptr,
+		nullptr, rzbitsextratable, rzbitstable,
+		nullptr, bendCutExtraTable, bendCutTable,
 		// Input memories
 		maskIS, inputStub, nullptr,
 		// AllStub memories
@@ -203,11 +272,11 @@ void VMRouterTop(BXType bx,
 		// ME memories
 		maskME, memoriesME,
 		// TEInner memories
-		maskTEI, memoriesTEI,
+		maskTEI, nullptr,
 		// TEInner Overlap memories
 		maskOL, memoriesOL,
 		// TEOuter memories
-		maskTEO, nullptr
+		maskTEO, memoriesTEO
 		);
 
 	return;
