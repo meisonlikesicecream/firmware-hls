@@ -11,6 +11,7 @@
 //          - the call to VMRouter() in VMRouterTop.cc
 //          - the included top function in VMRouter_test.cpp (if file name is changed)
 //          - the top function in script_VMR.tcl (if file name is changed)
+//          - add the phi region in emData/download.sh, make sure to also run clean
 
 
 void VMRouterTop(BXType bx,
@@ -181,7 +182,7 @@ void VMRouterTop(BXType bx,
 
 	// Masks of which memories that are being used. The first memory is represented by the LSB
 	// and a "1" implies that the specified memory is used for this phi region
-	// Create "nvm" 1s, e.g. "1111", shift the mask until it corresponds to the correct phi region
+	// Create "nvm" 1s, e.g. "1111". Shift the mask until it corresponds to the correct phi region
 	static const ap_uint<maskISsize> maskIS = ((1 << numInputs) - 1); // Input memories
 	static const ap_uint<maskMEsize> maskME = ((1 << nvmME) - 1) << (nvmME * (phiRegion - 'A')); // ME memories
 	static const ap_uint<maskTEIsize> maskTEI = ((kLAYER % 2) || (kDISK % 2)) ? ((1 << nvmTE) - 1) << (nvmTE * (phiRegion - 'A')) : 0x0; // TE Inner memories, only used for odd layers/disk

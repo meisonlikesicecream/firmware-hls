@@ -16,10 +16,10 @@ const int nEvents = 100;  //number of events to run
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
 // NOTE: to run a different phi region, change the following
-//          - the included top function (if file name is changed)
+//          - the included top function in VMRouter_test.cpp (if file name is changed)
 //          - the top function in script_VMR.tcl (if file name is changed)
+//          - add the phi region in emData/download.sh, make sure to also run clean
 //          - and the changes listed in VMRouterTop.cc/h
-
 
 // Finds all memory names for the specified processing module found in the wiring file,
 // and adds them to the fileNames array with the memory files directory, excluding the copies nX.
@@ -74,12 +74,12 @@ int main() {
   // Get lists of the input/output memory directory and file names
   // I.e. the names of the test vector files
 
-  // Uses wires_hourglass.dat wiring file
-  string wireFileName = "emData/wires_hourglass.dat"; // The wiring file name with directory
-  string testDataDirectory = "emData/MemPrints/"; // Directory for the test data
-
   string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegion : "D" + to_string(kDISK) + "PHI" + phiRegion; // Which layer/disk and phi region
   string fileEnding = (sector < 10) ? "_0" + to_string(sector) + ".dat" :  "_" + to_string(sector) + ".dat"; //All files ends with .dat. "_XX" specifies which sector
+
+  // Uses wires_hourglass.dat wiring file
+  string wireFileName = "emData/wires_hourglass.dat"; // The wiring file name with directory
+  string testDataDirectory = "emData/VMR/VMR_" + layerID; // Directory for the test data
 
   char specialPhiRegion[] = {'X', 'Y', 'Z', 'W', 'Q', 'R', 'S', 'T'}; // Special naming for the TE overlap memories, and outer memories in Disk 1
 
@@ -87,25 +87,25 @@ int main() {
   string inputNameList[numInputs];
   int inputNumCopies[numInputs] = {0}; // Array containing the number of copies of each memory
 
-  string inputDir = "InputStubs/InputStubs"; // Directory of InputStubs, including the first part of the file name
+  string inputDir = testDataDirectory + "/InputStubs"; // Directory of InputStubs, including the first part of the file name
   string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
 
   // Get the input file names and check that the wiring file can be opened properly
-  if (not findFileNames<numInputs>(testDataDirectory + inputDir, wireFileName, inMemID, inputNameList, inputNumCopies)) return -1;
+  if (not findFileNames<numInputs>(inputDir, wireFileName, inMemID, inputNameList, inputNumCopies)) return -1;
 
 
   // Start of AllStub file names, excluding the copy number
-  string allstubName = testDataDirectory + "Stubs/AllStubs_AS_" + layerID;
+  string allstubName = testDataDirectory + "/AllStubs_AS_" + layerID;
 
 
   // Start of MEStub file names, excluding the copy number, i.e. "n1" as they only have one copy
   string nameListME[numME];
   int numCopiesME[numME] = {0}; // Array containing the number of copies of each memory
 
-  string meDir = "VMStubsME/VMStubs"; // Directory of MEStubs, including the first part of the file name
+  string meDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
   string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
 
-  findFileNames<numME>(testDataDirectory + meDir, wireFileName, meMemID, nameListME, numCopiesME);
+  findFileNames<numME>(meDir, wireFileName, meMemID, nameListME, numCopiesME);
 
 
   // Start of TEInnerStub file names, excluding the copy number "nX"
@@ -113,10 +113,10 @@ int main() {
   int numCopiesTEI[numTEI] = {0}; // Array containing the number of copies of each memory
 
   if (maxTEICopies > 1) {
-    string teiDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string teiDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string teiMemID = "VMSTE_" + layerID; // TE Inner memory ID for the specified phi region
 
-    findFileNames<numTEI>(testDataDirectory + teiDir, wireFileName, teiMemID, nameListTEI, numCopiesTEI);
+    findFileNames<numTEI>(teiDir, wireFileName, teiMemID, nameListTEI, numCopiesTEI);
   }
 
 
@@ -125,10 +125,10 @@ int main() {
   int numCopiesOL[numOL] = {0}; // Array containing the number of copies of each memory
 
   if (maxOLCopies > 1) {
-    string olDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string olDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + specialPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
 
-    findFileNames<numOL>(testDataDirectory + olDir, wireFileName, olMemID, nameListOL, numCopiesOL);
+    findFileNames<numOL>(olDir, wireFileName, olMemID, nameListOL, numCopiesOL);
   }
 
 
@@ -137,10 +137,10 @@ int main() {
   int numCopiesTEO[numTEO] = {0}; // Array containing the number of copies of each memory
 
   if (maxTEOCopies > 1) {
-    string teoDir = "VMStubsTE/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string teoDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string teoMemID = (kDISK != 1) ? "VMSTE_" + layerID : string("VMSTE_D1PHI") + specialPhiRegion[phiRegion - 'A']; // TE Outer memory ID for the specified phi region
 
-    findFileNames<numTEO>(testDataDirectory + teoDir, wireFileName, teoMemID, nameListTEO, numCopiesTEO);
+    findFileNames<numTEO>(teoDir, wireFileName, teoMemID, nameListTEO, numCopiesTEO);
   }
 
 
