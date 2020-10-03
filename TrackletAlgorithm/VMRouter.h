@@ -693,24 +693,24 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 
 		// Read stub from memory in turn.
 		// Reading is ordered as in wiring script to pass testbench
-		if (nInputs[4]) { // For DISK2S
+		if (maskIS[4] && nInputs[4]) { // For DISK2S
 			assert(Disk);
 			stubDisk2S = inputStubsDisk2S[0].read_mem(bx, read_addr);
 			disk2S = true;
 			--nInputs[4];
 			if (nInputs[4] == 0)
 				resetNext = true;
-		} else if (nInputs[0]) {
+		} else if (maskIS[0] && nInputs[0]) {
 			stub = inputStubs[0].read_mem(bx, read_addr);
 			--nInputs[0];
 			if (nInputs[0] == 0)
 				resetNext = true;
-		} else if (nInputs[1]) {
+		} else if (maskIS[1] && nInputs[1]) {
 			stub = inputStubs[1].read_mem(bx, read_addr);
 			--nInputs[1];
 			if (nInputs[1] == 0)
 				resetNext = true;
-		} else if (nInputs[5]) { // For DISK2S
+		} else if (maskIS[5] && nInputs[5]) { // For DISK2S
 			assert(Disk);
 			stubDisk2S = inputStubsDisk2S[1].read_mem(bx, read_addr);
 			disk2S = true;
@@ -718,13 +718,13 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			--nInputs[5];
 			if (nInputs[5] == 0)
 				resetNext = true;
-		} else if (nInputs[2]) {
+		} else if (maskIS[2] && nInputs[2]) {
 			stub = inputStubs[2].read_mem(bx, read_addr);
 			negDisk = (Disk) ? true : false;
 			--nInputs[2];
 			if (nInputs[2] == 0)
 				resetNext = true;
-		} else if (nInputs[3]) {
+		} else if (maskIS[3] && nInputs[3]) {
 			stub = inputStubs[3].read_mem(bx, read_addr);
 			negDisk = (Disk) ? true : false;
 			--nInputs[3];

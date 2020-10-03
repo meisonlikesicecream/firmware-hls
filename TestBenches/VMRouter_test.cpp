@@ -1,7 +1,7 @@
 // Test bench for VMRouter
-//#include "VMRouterTop.h"
+#include "VMRouterTop.h"
+//#include "VMRouterTop_L2PHID.h"
 //#include "VMRouterTop_D1PHIA.h"
-#include "VMRouterTop_L2PHID.h"
 
 #include <algorithm>
 #include <iterator>
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-const int nEvents = 10;  //number of events to run
+const int nEvents = 100;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
