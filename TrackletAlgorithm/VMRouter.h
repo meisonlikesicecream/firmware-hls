@@ -44,6 +44,7 @@ constexpr unsigned int nvmtedisks[5] = { 4, 4, 4, 4, 4 };
 
 constexpr unsigned int nvmollayers[2] = { 2, 2 }; // Number of Overlap VM modules per coarse phi region
 
+
 // Number of bits used for the VMs for different layers and disks
 // E.g. 32 VMs would use 5 vmbits
 constexpr int nbitsvmlayer[6] = { 5, 5, 4, 5, 4, 5 }; // Could be computed using the number of VMs...
@@ -371,7 +372,6 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 
 
 	// Set values to VMStubeTEInner
-
 	stubTE.setBend(bend);
 	stubTE.setIndex(typename VMStubTEInner<OutType>::VMSTEIID(index));
 
@@ -463,6 +463,7 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 				iphivmFineBins<InType>(phiCorr, vmbits, nFinePhiBits));
 
 	auto iphiRaw = iphivmRaw<InType>(phiCorr); // Top 5 bits of phi
+
 	ivm = iphiRaw * d_te; // The VM number
 
 	// Indices used to find the rzfine value in finebintable
@@ -838,6 +839,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			if ((rzbits != -1) && maskTEI[ivm]) {
 				int memIndex = ivm-firstTE; // Index for the correct memory in memory array
 				int bendIndex = memIndex*MaxTEICopies; // Index for bendcut LUTs
+				
 				for (int n = 0; n < MaxTEICopies; n++) {
 #pragma HLS UNROLL
 					bool passBend = bendCutInnerTable[bendIndex][stubTE.getBend()];

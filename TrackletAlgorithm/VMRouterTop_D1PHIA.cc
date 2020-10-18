@@ -63,7 +63,6 @@ void VMRouterTop(BXType bx,
 
 	ap_uint<1> tmpBendTable1_n3[bendCutTableSize] = {0};
 
-
 	// TE Memory 2
 	ap_uint<1> tmpBendTable2_n1[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA2n1_vmbendcut.tab"
@@ -74,7 +73,6 @@ void VMRouterTop(BXType bx,
 	ap_uint<1> tmpBendTable2_n3[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA2n3_vmbendcut.tab"
 
-
 	// TE Memory 3
 	ap_uint<1> tmpBendTable3_n1[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA3n1_vmbendcut.tab"
@@ -84,7 +82,6 @@ void VMRouterTop(BXType bx,
 
 	ap_uint<1> tmpBendTable3_n3[] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA3n3_vmbendcut.tab"
-
 
 	// TE Memory 4
 	ap_uint<1> tmpBendTable4_n1[] =
@@ -117,7 +114,6 @@ void VMRouterTop(BXType bx,
 	ap_uint<1> tmpBendExtraTable1_n4[bendCutTableSize] = {0};
 
 	ap_uint<1> tmpBendExtraTable1_n5[bendCutTableSize] = {0};
-
 
 	// TE Overlap Memory 2
 	ap_uint<1> tmpBendExtraTable2_n1[] =

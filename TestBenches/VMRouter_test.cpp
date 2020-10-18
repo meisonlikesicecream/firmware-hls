@@ -1,7 +1,6 @@
 // Test bench for VMRouter
-#include "VMRouterTop.h"
-//#include "VMRouterTop_L2PHID.h"
-//#include "VMRouterTop_D1PHIA.h"
+//#include "VMRouterTop.h"
+#include "VMRouterTop_D2PHIA.h"
 
 #include <algorithm>
 #include <iterator>
@@ -10,7 +9,7 @@
 
 using namespace std;
 
-const int nEvents = 100;  //number of events to run
+const int nEvents = 1;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -279,12 +278,13 @@ int main() {
     bool truncation = false;
 
     // AllStub
-    for (unsigned int i = 0; i < numInputs; i++) {
+    for (unsigned int i = 0; i < maxASCopies; i++) {
       err += compareMemWithFile<AllStubMemory<outputType>>(memoriesAS[i], fout_allstub[i], ievt, "AllStub", truncation);
     }
 
     // ME Memories
     for (unsigned int i = 0; i < numME; i++) {
+      std::cout  << "hello" << std::endl;
       err += compareBinnedMemWithFile<VMStubMEMemory<outputType, nbitsbin>>(memoriesME[i], fout_vmstubme[i], ievt, "VMStubME" + to_string(i), truncation);
     }
 

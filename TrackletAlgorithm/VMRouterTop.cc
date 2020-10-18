@@ -54,9 +54,8 @@ void VMRouterTop(BXType bx,
 	// LUT with the Z/R bits for TE Overlap memories
 	// Only used for layer 1 and 2, and disk 1
 	// Indexed using z and r position bits
-	static const int rzbitsextratable[ ] = // 11 bits used for LUT
+	static const int rzbitsextratable[] = // 11 bits used for LUT
 #include "../emData/VMR/tables/VMTableInnerL1D1.tab"
-
 
 	// LUT with bend-cuts for the TE memories
 	// The cuts are different depending on the memory version (nX)
