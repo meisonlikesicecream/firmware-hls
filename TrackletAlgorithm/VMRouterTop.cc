@@ -47,14 +47,14 @@ void VMRouterTop(BXType bx,
 	// LUT with the Z/R bits for TE memories
 	// Contain information about where in z to look for valid stub pairs
 	// Indexed using z and r position bits
-	static const int rzbitstable[] =
+	static const int rzBitsTable[] =
 #include "../emData/VMR/tables/VMTableInnerL1L2.tab"
 
 
 	// LUT with the Z/R bits for TE Overlap memories
 	// Only used for layer 1 and 2, and disk 1
 	// Indexed using z and r position bits
-	static const int rzbitsextratable[] = // 11 bits used for LUT
+	static const int rzBitsExtraTable[] = // 11 bits used for LUT
 #include "../emData/VMR/tables/VMTableInnerL1D1.tab"
 
 	// LUT with bend-cuts for the TE memories
@@ -165,8 +165,8 @@ void VMRouterTop(BXType bx,
 #pragma HLS resource variable=inputStub[3].get_mem() latency=2
 
 #pragma HLS resource variable=fineBinTable latency=2
-#pragma HLS resource variable=rzbitstable latency=2
-#pragma HLS resource variable=rzbitsextratable latency=2
+#pragma HLS resource variable=rzBitsTable latency=2
+#pragma HLS resource variable=rzBitsExtraTable latency=2
 // #pragma HLS resource variable=bendCutTable latency=2
 // #pragma HLS resource variable=bendCutExtraTable latency=2
 // phiCorrTable and bendCutTable seems to be using LUTs as they relatively small?
@@ -184,7 +184,7 @@ void VMRouterTop(BXType bx,
 	// Create "nvm" 1s, e.g. "1111". Shift the mask until it corresponds to the correct phi region
 	static const ap_uint<maskISsize> maskIS = ((1 << numInputs) - 1); // Input memories
 	static const ap_uint<maskMEsize> maskME = ((1 << nvmME) - 1) << (nvmME * (phiRegion - 'A')); // ME memories
-	static const ap_uint<maskTEIsize> maskTEI = ((kLAYER % 2) || (kDISK % 2)) ? ((1 << nvmTE) - 1) << (nvmTE * (phiRegion - 'A')) : 0x0; // TE Inner memories, only used for odd layers/disk
+	static const ap_uint<maskTEIsize> maskTEI = (((kLAYER % 2) || (kDISK % 2)) && (kDISK != 5)) ? ((1 << nvmTE) - 1) << (nvmTE * (phiRegion - 'A')) : 0x0; // TE Inner memories, only used for odd layers/disk but not disk 5
 	static const ap_uint<maskOLsize> maskOL = (nvmOL) ? ((1 << nvmOL) - 1) << (nvmOL * (phiRegion - 'A')) : 0x0; // TE Inner Overlap memories, only used for layer 1 and 2
 	static const ap_uint<maskTEOsize> maskTEO = (!((kLAYER % 2) || (kDISK % 2)) || (kDISK == 1)) ? ((1 << nvmTE) - 1) << (nvmTE * (phiRegion - 'A')) : 0x0; // TE Outer memories, only for even layers/disks and disk 1
 
@@ -194,7 +194,7 @@ void VMRouterTop(BXType bx,
 
 	VMRouter<inputType, outputType, kLAYER, kDISK,  maxASCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin, bendCutTableSize>
 	(bx, fineBinTable, phiCorrTable,
-		rzbitstable, rzbitsextratable, nullptr,
+		rzBitsTable, rzBitsExtraTable, nullptr,
 		bendCutTable, bendCutExtraTable, nullptr,
 		// Input memories
 		maskIS, inputStub, nullptr,

@@ -37,7 +37,7 @@ constexpr int numInputs(4); // Total number of input memories
 constexpr int numInputsDiskPS(0); // Only used for disks
 constexpr int numInputsDisk2S(numInputs-numInputsDiskPS); // Only used for disks
 
-constexpr int bendCutTableSize(8); // Number of entries in each bendcut table
+constexpr int bendCutTableSize(8); // Number of entries in each bendcut table. Can't use 0.
 
 
 ///////////////////////////////////////////////

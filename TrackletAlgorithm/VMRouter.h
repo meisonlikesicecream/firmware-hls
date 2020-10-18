@@ -316,9 +316,10 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 
 	// Get the corrected r/z position
 	auto rzcorr = fineBinTable[finebinindex];
-
+	
 	// Coarse z. The bin the stub is going to be put in, in the memory
 	bin = rzcorr >> nfinerzbits; // 3 bits, i.e. max 8 bins within each VM
+	
 	if (negDisk)
 		bin += 1 << MEBinsBits; // bin 8-16 are for negative disks
 
