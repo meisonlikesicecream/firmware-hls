@@ -58,23 +58,26 @@ constexpr int nbitsztabledisk = 3;
 constexpr int nbitsrtabledisk = 8;
 
 // Number of MSBs used for r index in phiCorr LUTs
-constexpr int nrBitsPhiCorrTable = 3; // Found hardcoded in VMRouterphiCorrTable.h
+constexpr int nbitsrphitorrtable = 3; // Found hardcoded in VMRouterphiCorrTable.h
 
 // Constants used for calculating which VM a stub belongs to
-constexpr int nmaxvmbits = 5; // Maximum number of bits used for the VM number, i.e. 32
-constexpr int nmaxvmolbits = 4; // Overlap
+constexpr int nbitsmaxvm = 5; // Maximum number of bits used for the VM number, i.e. 32
+constexpr int nbitsmaxvmol = 4; // Overlap
 
-constexpr float maxvmbins = 1 << nmaxvmbits; // How many bins nmaxvmbits would correspond to
-constexpr float maxvmolbins = 1 << nmaxvmolbits; // Overlap
+constexpr float maxvmbins = 1 << nbitsmaxvm; // How many bins nbitsmaxvm would correspond to
+constexpr float maxvmolbins = 1 << nbitsmaxvmol; // Overlap
 
-constexpr int nphibitsraw = 7; // Number of bits used for calculating iPhiRawPlus/Minus
+constexpr int nbitsphiraw = 7; // Number of bits used for calculating iPhiRawPlus/Minus
 
 // The length of the masks used for the memories
 constexpr int maskISsize = 6; // Input memories
-constexpr int maskMEsize = 1 << nmaxvmbits; // ME memories
-constexpr int maskTEIsize = 1 << nmaxvmbits; // TEInner memories
-constexpr int maskOLsize = 1 << nmaxvmolbits; // TEInner Overlap memories
-constexpr int maskTEOsize = 1 << nmaxvmbits; // TEOuter memories
+constexpr int maskMEsize = 1 << nbitsmaxvm; // ME memories
+constexpr int maskTEIsize = 1 << nbitsmaxvm; // TEInner memories
+constexpr int maskOLsize = 1 << nbitsmaxvmol; // TEInner Overlap memories
+constexpr int maskTEOsize = 1 << nbitsmaxvm; // TEOuter memories
+
+// Maximum number of memories, exclusive DISK2S
+constexpr int maxinput = 4;
 
 
 //////////////////////////////////////
@@ -94,11 +97,11 @@ inline ap_uint<arraySize> arrayToInt(ap_uint<1> array[arraySize]) {
 	return number;
 }
 
-// Returns top 5 (nmaxvmbits) bits of phi, i.e. max 31 in decimal
+// Returns top 5 (nbitsmaxvm) bits of phi, i.e. max 31 in decimal
 template<regionType InType>
-inline ap_uint<nmaxvmbits> iphivmRaw(const typename AllStub<InType>::ASPHI phi) {
+inline ap_uint<nbitsmaxvm> iphivmRaw(const typename AllStub<InType>::ASPHI phi) {
 
-	ap_uint<nmaxvmbits> iphivm = phi.range(phi.length() - 1, phi.length() - nmaxvmbits);
+	ap_uint<nbitsmaxvm> iphivm = phi.range(phi.length() - 1, phi.length() - nbitsmaxvm);
 
 	return iphivm;
 }
@@ -107,22 +110,22 @@ inline ap_uint<nmaxvmbits> iphivmRaw(const typename AllStub<InType>::ASPHI phi) 
 // we add a small amount to the raw value; if it's not the same
 // as the central value we copy the data to the adjacent memory as well.
 template<regionType InType>
-inline ap_uint<nmaxvmbits> iphivmRawPlus(const typename AllStub<InType>::ASPHI phi) {
+inline ap_uint<nbitsmaxvm> iphivmRawPlus(const typename AllStub<InType>::ASPHI phi) {
 
-	ap_uint<nphibitsraw> tmp(phi.range(phi.length() - 1, phi.length() - nphibitsraw));
+	ap_uint<nbitsphiraw> tmp(phi.range(phi.length() - 1, phi.length() - nbitsphiraw));
 	++tmp;
-	ap_uint<nmaxvmbits> plus(tmp.range(tmp.length() - 1, nphibitsraw - nmaxvmbits));
+	ap_uint<nbitsmaxvm> plus(tmp.range(tmp.length() - 1, nbitsphiraw - nbitsmaxvm));
 
 	return plus;
 }
 
 // See above.
 template<regionType InType>
-inline ap_uint<nmaxvmbits> iphivmRawMinus(const typename AllStub<InType>::ASPHI phi) {
+inline ap_uint<nbitsmaxvm> iphivmRawMinus(const typename AllStub<InType>::ASPHI phi) {
 
-	ap_uint<nphibitsraw> tmp(phi.range(phi.length() - 1, phi.length() - nphibitsraw));
+	ap_uint<nbitsphiraw> tmp(phi.range(phi.length() - 1, phi.length() - nbitsphiraw));
 	--tmp;
-	ap_uint<nmaxvmbits> minus(tmp.range(tmp.length() - 1, nphibitsraw - nmaxvmbits));
+	ap_uint<nbitsmaxvm> minus(tmp.range(tmp.length() - 1, nbitsphiraw - nbitsmaxvm));
 
 	return minus;
 }
@@ -150,10 +153,10 @@ inline typename AllStub<InType>::ASPHI getPhiCorr(
 	if (InType == DISKPS || InType == DISK2S)
 		return phi; // Do nothing if disks
 
-	constexpr auto rBins = 1 << nrBitsPhiCorrTable; // The number of bins for r
+	constexpr auto rBins = 1 << nbitsrphitorrtable; // The number of bins for r
 
-	ap_uint<nrBitsPhiCorrTable> rBin = (r + (1 << (r.length() - 1)))
-			>> (r.length() - nrBitsPhiCorrTable); // Which bin r belongs to. Note r = 0 is mid radius
+	ap_uint<nbitsrphitorrtable> rBin = (r + (1 << (r.length() - 1)))
+			>> (r.length() - nbitsrphitorrtable); // Which bin r belongs to. Note r = 0 is mid radius
 	auto index = bend * rBins + rBin; // Index for where we find our correction value
 	auto corrValue = phiCorrTable[index]; // The amount we need to correct our phi
 
@@ -171,7 +174,7 @@ inline typename AllStub<InType>::ASPHI getPhiCorr(
 // Returns the number of the first ME/TE memory for the current VMRouter
 // I.e. the position of the first non-zero bit in the mask
 // L1PHIE17 would return 16
-inline ap_uint<nmaxvmbits> firstMemNumber(const ap_uint<static_cast<int>(maxvmbins)> mask) {
+inline ap_uint<nbitsmaxvm> firstMemNumber(const ap_uint<static_cast<int>(maxvmbins)> mask) {
 	ap_uint<static_cast<int>(maxvmbins)> i = 0;
 	ap_uint<1> x = mask[i]; // Value of the i:th bit
 
@@ -259,7 +262,7 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 					nallstubsdisks[Disk - 1] * nvmmedisks[Disk - 1];
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
-	static const ap_ufixed<nmaxvmbits, nmaxvmbits-1> d_me = nvmTotME / maxvmbins;
+	static const ap_ufixed<nbitsmaxvm, nbitsmaxvm-1> d_me = nvmTotME / maxvmbins;
 
 
 	// Set values to VMStubME
@@ -364,7 +367,7 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 					nallstubsdisks[Disk - 1] * nvmtedisks[Disk - 1];
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
-	static const ap_ufixed<nmaxvmbits, nmaxvmbits-1> d_te = nvmTotTE / maxvmbins;
+	static const ap_ufixed<nbitsmaxvm, nbitsmaxvm-1> d_te = nvmTotTE / maxvmbins;
 
 
 	// Set values to VMStubeTEInner
@@ -448,7 +451,7 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 					nallstubsdisks[Disk - 1] * nvmtedisks[Disk - 1];
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
-	static const ap_ufixed<nmaxvmbits, nmaxvmbits-1> d_te = nvmTotTE / maxvmbins;
+	static const ap_ufixed<nbitsmaxvm, nbitsmaxvm-1> d_te = nvmTotTE / maxvmbins;
 
 
 	// Set values to VMSTubTE Outer
@@ -530,7 +533,7 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 	static const auto nFinePhiBits = stubOL.getFinePhi().length(); // Number of bits used for fine phi
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
-	static const ap_ufixed<nmaxvmbits, nmaxvmolbits-1> d_ol = nvmTotOL / maxvmolbins;
+	static const ap_ufixed<nbitsmaxvm, nbitsmaxvmol-1> d_ol = nvmTotOL / maxvmolbins;
 
 	// Set values to Overlap stub
 
@@ -669,10 +672,10 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			for (int j = 0; j < maskISsize; j++) {
 #pragma HLS UNROLL
 				ap_uint<kNBits_MemAddr> tmp;
-				if (j < 4) {
+				if (j < maxinput) {
 					tmp = maskIS[j] != 0 ? inputStubs[j].getEntries(bx) : zero;
 				} else { // For DISK2S
-					tmp = maskIS[j] != 0 ? inputStubsDisk2S[j-4].getEntries(bx) : zero;
+					tmp = maskIS[j] != 0 ? inputStubsDisk2S[j-maxinput].getEntries(bx) : zero;
 				}
 				nInputs[j] = tmp;
 				nTotal += tmp;
