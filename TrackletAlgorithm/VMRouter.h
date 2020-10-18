@@ -530,8 +530,8 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 
 	// Number of bits
 	constexpr auto nvmTotOL =
-			(Layer) ? nallstubslayers[Layer - 1] * nvmollayers[Layer - 1] : 0; // Total number of VMs for Overlap in a whole sector
-	constexpr auto vmbits = (Layer) ? nbitsvmoverlap[Layer - 1] : 0; // Number of bits used for VMs
+			(Layer && (Layer < 3))  ? nallstubslayers[Layer - 1] * nvmollayers[Layer - 1] : 0; // Total number of VMs for Overlap in a whole sector
+	constexpr auto vmbits = (Layer && (Layer < 3)) ? nbitsvmoverlap[Layer - 1] : 0; // Number of bits used for VMs
 	static const auto nFinePhiBits = stubOL.getFinePhi().length(); // Number of bits used for fine phi
 
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
