@@ -21,9 +21,10 @@ constexpr char phiRegion = 'A'; // Which AllStub/PhiRegion
 constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
+// Note: can't use 0 if we don't have any memories of a certain type. Use 1.
 constexpr int maxASCopies(6); // Allstub memory
 constexpr int maxTEICopies(3); // TE Inner memories
-constexpr int maxOLCopies(1); // Can't use 0 even if we don't have any TE Inner Overlap memories
+constexpr int maxOLCopies(1); // TE Inner Overlap memories
 constexpr int maxTEOCopies(5); // TE Outer memories
 
 // Number of inputs

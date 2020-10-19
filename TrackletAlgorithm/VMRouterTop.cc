@@ -60,69 +60,70 @@ void VMRouterTop(BXType bx,
 	// LUT with bend-cuts for the TE memories
 	// The cuts are different depending on the memory version (nX)
 	// Indexed using bend bits
+	// Note: use an array of zeros for "missing" memories in the first and last Phi Region
 
 	// TE Memory 1
-	ap_uint<1> tmpBendTable1_n1[] =
+	ap_uint<1> tmpBendTable1_n1[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE17n1_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable1_n2[] =
+	ap_uint<1> tmpBendTable1_n2[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE17n2_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable1_n3[] =
+	ap_uint<1> tmpBendTable1_n3[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE17n3_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable1_n4[] =
+	ap_uint<1> tmpBendTable1_n4[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE17n4_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable1_n5[] =
+	ap_uint<1> tmpBendTable1_n5[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE17n5_vmbendcut.tab"
 
 	// TE Memory 2
-	ap_uint<1> tmpBendTable2_n1[] =
+	ap_uint<1> tmpBendTable2_n1[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE18n1_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable2_n2[] =
+	ap_uint<1> tmpBendTable2_n2[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE18n2_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable2_n3[] =
+	ap_uint<1> tmpBendTable2_n3[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE18n3_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable2_n4[] =
+	ap_uint<1> tmpBendTable2_n4[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE18n4_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable2_n5[] =
+	ap_uint<1> tmpBendTable2_n5[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE18n5_vmbendcut.tab"
 
 	// TE Memory 3
-	ap_uint<1> tmpBendTable3_n1[] =
+	ap_uint<1> tmpBendTable3_n1[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE19n1_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable3_n2[] =
+	ap_uint<1> tmpBendTable3_n2[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE19n2_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable3_n3[] =
+	ap_uint<1> tmpBendTable3_n3[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE19n3_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable3_n4[] =
+	ap_uint<1> tmpBendTable3_n4[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE19n4_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable3_n5[] =
+	ap_uint<1> tmpBendTable3_n5[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE19n5_vmbendcut.tab"
 
 // TE Memory 4
-	ap_uint<1> tmpBendTable4_n1[] =
+	ap_uint<1> tmpBendTable4_n1[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE20n1_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable4_n2[] =
+	ap_uint<1> tmpBendTable4_n2[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE20n2_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable4_n3[] =
+	ap_uint<1> tmpBendTable4_n3[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE20n3_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable4_n4[] =
+	ap_uint<1> tmpBendTable4_n4[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE20n4_vmbendcut.tab"
 
-	ap_uint<1> tmpBendTable4_n5[] =
+	ap_uint<1> tmpBendTable4_n5[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIE20n5_vmbendcut.tab"
 
 	// Combine all the temporary tables into one big table
@@ -134,23 +135,23 @@ void VMRouterTop(BXType bx,
 
 
 	// TE Overlap Memory 1
-	ap_uint<1> tmpBendExtraTable1_n1[] =
+	ap_uint<1> tmpBendExtraTable1_n1[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ9n1_vmbendcut.tab"
 
-	ap_uint<1> tmpBendExtraTable1_n2[] =
+	ap_uint<1> tmpBendExtraTable1_n2[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ9n2_vmbendcut.tab"
 
-	ap_uint<1> tmpBendExtraTable1_n3[] =
+	ap_uint<1> tmpBendExtraTable1_n3[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ9n3_vmbendcut.tab"
 
 	// TE Overlap Memory 2
-	ap_uint<1> tmpBendExtraTable2_n1[] =
+	ap_uint<1> tmpBendExtraTable2_n1[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ10n1_vmbendcut.tab"
 
-	ap_uint<1> tmpBendExtraTable2_n2[] =
+	ap_uint<1> tmpBendExtraTable2_n2[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ10n2_vmbendcut.tab"
 
-	ap_uint<1> tmpBendExtraTable2_n3[] =
+	ap_uint<1> tmpBendExtraTable2_n3[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_L1PHIQ10n3_vmbendcut.tab"
 
 	// Combine all the temporary extra tables into one big table

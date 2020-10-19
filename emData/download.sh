@@ -18,8 +18,6 @@ declare -a processing_modules=(
   # VMRouter
   "VMR_L1PHIE"
   "VMR_L2PHID"
-  "VMR_D1PHIA"
-  "VMR_D2PHIA"
 
   # TrackletEngine
   "TE_L1PHIE18_L2PHIC17"
