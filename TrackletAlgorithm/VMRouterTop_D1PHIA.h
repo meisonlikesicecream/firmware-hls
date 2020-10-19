@@ -40,7 +40,7 @@ constexpr int bendCutTableSize(8); // Number of entries in each bendcut table. C
 // Number of VMs
 constexpr int numME = (kLAYER) ? nvmmelayers[kLAYER-1] : nvmmedisks[kDISK-1]; // ME memories
 constexpr int numTEI = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Inner memories
-constexpr int numOL = (kLAYER) ? nvmollayers[kLAYER-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
+constexpr int numOL = (kLAYER && (kLAYER < 3)) ? nvmollayers[kLAYER-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
 constexpr int numTEO = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Outer memories
 
 // Number of bits used for the bins in VMStubeME memories
