@@ -28,7 +28,7 @@ constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
 constexpr int maxASCopies(7); // Allstub memory
-constexpr int maxTEICopies(1); // TE Inner memories
+constexpr int maxTEICopies(3); // TE Inner memories
 constexpr int maxOLCopies(4); // TE Inner Overlap memories
 constexpr int maxTEOCopies(5); // Can't use 0 even if we don't have any TE Outer memories
 
@@ -44,10 +44,12 @@ constexpr int bendCutTableSize(8); // Number of entries in each bendcut table
 // Variables that don't need manual changing
 
 // Number of VMs
-constexpr int numME = (kLAYER) ? nvmmelayers[kLAYER-1] : nvmmedisks[kDISK-1]; // ME memories
-constexpr int numTEI = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Inner memories
-constexpr int numOL = (kLAYER) ? nvmollayers[kLAYER-1] : 0; // TE Inner Overlap memories
-constexpr int numTEO = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1]; // TE Outer memories
+constexpr int nvmStandardTE = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDISK-1];
+
+constexpr int nvmME = (kLAYER) ? nvmmelayers[kLAYER-1] : nvmmedisks[kDISK-1]; // ME memories
+constexpr int nvmTEI = (kLAYER != 2) ? nvmStandardTE : nvmteextralayers[kLAYER-1]; // TE Inner memories
+constexpr int nvmOL = (kLAYER && (kLAYER < 3)) ? nvmollayers[kLAYER-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
+constexpr int nvmTEO = (kLAYER != 3) ? nvmStandardTE : nvmteextralayers[kLAYER-1]; // TE Outer memories
 
 // Number of bits used for the bins in VMStubeME memories
 constexpr int nbitsbin = (kLAYER) ? 3 : 4;
@@ -69,9 +71,10 @@ void VMRouterTop(BXType bx,
 
 	// Output memories
 	AllStubMemory<outputType> allStub[maxASCopies],
-	VMStubMEMemory<outputType, nbitsbin> memoriesME[numME],
-	VMStubTEInnerMemory<BARRELOL> memoriesOL[numOL][maxOLCopies],
-	VMStubTEOuterMemory<outputType> memoriesTEO[numTEI][maxTEOCopies]
+	VMStubMEMemory<outputType, nbitsbin> memoriesME[nvmME],
+	VMStubTEInnerMemory<outputType> memoriesTEI[nvmTEI][maxTEICopies],
+	VMStubTEInnerMemory<BARRELOL> memoriesOL[nvmOL][maxOLCopies],
+	VMStubTEOuterMemory<outputType> memoriesTEO[nvmTEO][maxTEOCopies]
 	);
 
 #endif // TrackletAlgorithm_VMRouterTop_h
