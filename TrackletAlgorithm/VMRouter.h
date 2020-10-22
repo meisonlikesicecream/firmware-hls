@@ -72,6 +72,9 @@ constexpr float maxvmolbins = 1 << nbitsmaxvmol; // Overlap
 
 constexpr int nbitsphiraw = 7; // Number of bits used for calculating iPhiRawPlus/Minus
 
+// Number of bits for nTotal that keeps track of
+constexpr int nbitsntot = kNBits_MemAddr + 3; // Can handle 2^3 input memories without overflow; we have at most 6 inputs
+
 // The length of the masks used for the memories
 constexpr int maskISsize = 6; // Input memories
 constexpr int maskMEsize = 1 << nbitsmaxvm; // ME memories
@@ -294,8 +297,8 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 	// Indices used to find the rzfine value in finebintable
 	// finebintable returns the top 6 bits of a corrected z
 	// Note: not the index that is being saved to the stub
-	ap_uint<nbitszfinebintable + nbitsrfinebintable> indexz = ((z
-			+ (1 << (nzBits - 1))) >> (nzBits - nbitszfinebintable)); // Make z unsigned and take the top "nbitszfinebintable" bits
+	ap_uint<nbitszfinebintable + nbitsrfinebintable> indexz =
+			((z + (1 << (nzBits - 1))) >> (nzBits - nbitszfinebintable)); // Make z unsigned and take the top "nbitszfinebintable" bits
 	ap_uint<nbitsrfinebintable> indexr = -1;
 
 	constexpr int rbins = (1 << nbitsrfinebintable); // Number of bins in r in finebintable
@@ -392,8 +395,8 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 	// Indices used to find the rzfine value in finebintable
 	// finebintable returns the top 6 bits of a corrected z
 	// Note: not the index that is being saved to the stub
-	ap_uint<nzbitsinnertable + nrbitsinnertable> indexz = ((z
-			+ (1 << (nzBits- 1))) >> (nzBits- nzbitsinnertable)); // Make z unsigned and take the top "nbitszfinebintable" bits
+	ap_uint<nzbitsinnertable + nrbitsinnertable> indexz =
+			((z + (1 << (nzBits- 1))) >> (nzBits- nzbitsinnertable)); // Make z unsigned and take the top "nbitszfinebintable" bits
 	ap_uint<nrbitsinnertable> indexr = -1;
 
 	constexpr auto rbins = (1 << nrbitsinnertable); // Number of bins in r
@@ -484,8 +487,8 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 	// Indices used to find the rzfine value in finebintable
 	// finebintable returns the top 6 bits of a corrected z
 	// Note: not the index that is being saved to the stub
-	ap_uint<nzbitsoutertable + nrbitsoutertable> indexz = ((z
-			+ (1 << (nzBits- 1))) >> (nzBits- nzbitsoutertable)); // Make z unsigned and take the top "nbitszfinebintable" bits
+	ap_uint<nzbitsoutertable + nrbitsoutertable> indexz =
+			((z + (1 << (nzBits- 1))) >> (nzBits- nzbitsoutertable)); // Make z unsigned and take the top "nbitszfinebintable" bits
 	ap_uint<nrbitsoutertable> indexr = -1;
 
 	constexpr auto rbins = (1 << nrbitsoutertable); // Number of bins in r
@@ -640,7 +643,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 	ap_uint<kNBits_MemAddr> addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
 
 	// Number of data in each input memory
-	ap_uint<kNBits_MemAddr> nTotal = 0; // Total number of inputs
+	ap_uint<nbitsntot> nTotal = 0; // Total number of inputs
 	typename InputStubMemory<InType>::NEntryT nInputs[maskISsize]; // Array containing the number of inputs. Last two indices are for DISK2S
 	#pragma HLS array_partition variable=nInputs complete dim=0
 
@@ -697,7 +700,6 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 				nInputs[j] = tmp;
 				nTotal += tmp;
 			}
-
 			continue;
 		}
 

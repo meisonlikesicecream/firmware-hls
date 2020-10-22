@@ -298,9 +298,15 @@ void VMRouterTop(BXType bx,
 	// Create "nvm" 1s, e.g. "1111", shift the mask until it corresponds to the correct phi region
 	static const ap_uint<maskISsize> maskIS = ((1 << numInputs) - 1); // Input memories
 	static const ap_uint<maskMEsize> maskME = ((1 << nvmME) - 1) << (nvmME * (phiRegion - 'A')); // ME memories
-	static const ap_uint<maskTEIsize> maskTEI = ((kLAYER % 2) || (kDISK % 2) || (kLAYER == 2)) ? ((1 << nvmTEI) - 1) << (nvmTEI * (phiRegion - 'A')) : 0x0; // TE Inner memories, only used for odd layers/disk and layer 2
-	static const ap_uint<maskOLsize> maskOL = ((kLAYER == 1) || (kLAYER == 2)) ? ((1 << nvmOL) - 1) << (nvmOL * (phiRegion - 'A')) : 0x0; // TE Inner Overlap memories, only used for layer 1 and 2
-	static const ap_uint<maskTEOsize> maskTEO = (!((kLAYER % 2) || (kDISK % 2)) || (kLAYER == 3)|| (kDISK == 1)) ? ((1 << nvmTEO) - 1) << (nvmTEO * (phiRegion - 'A')) : 0x0; // TE Outer memories, only for even layers/disks, and layer and disk 1
+	static const ap_uint<maskTEIsize> maskTEI =
+		(kLAYER == 1 || kLAYER  == 2 || kLAYER == 3 || kLAYER == 5 || kDISK == 1 || kDISK == 3) ?
+				((1 << nvmTEI) - 1) << (nvmTEI * (phiRegion - 'A')) : 0x0; // TE Inner memories, only used for odd layers/disk and layer 2
+	static const ap_uint<maskOLsize> maskOL =
+		((kLAYER == 1) || (kLAYER == 2)) ?
+				((1 << nvmOL) - 1) << (nvmOL * (phiRegion - 'A')) : 0x0; // TE Inner Overlap memories, only used for layer 1 and 2
+	static const ap_uint<maskTEOsize> maskTEO =
+		(kLAYER == 2 || kLAYER == 3 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 2 || kDISK == 4) ?
+				((1 << nvmTEO) - 1) << (nvmTEO * (phiRegion - 'A')) : 0x0; // TE Outer memories, only for even layers/disks, and layer and disk 1
 
 
 	/////////////////////////

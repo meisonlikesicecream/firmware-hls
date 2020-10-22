@@ -43,7 +43,7 @@ constexpr int nvmStandardTE = (kLAYER) ? nvmtelayers[kLAYER-1] : nvmtedisks[kDIS
 
 constexpr int nvmME = (kLAYER) ? nvmmelayers[kLAYER-1] : nvmmedisks[kDISK-1]; // ME memories
 constexpr int nvmTEI = (kLAYER != 2) ? nvmStandardTE : nvmteextralayers[kLAYER-1]; // TE Inner memories
-constexpr int nvmOL = (kLAYER && (kLAYER < 3)) ? nvmollayers[kLAYER-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
+constexpr int nvmOL = (kLAYER == 1 || kLAYER == 2) ? nvmollayers[kLAYER-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
 constexpr int nvmTEO = (kLAYER != 3) ? nvmStandardTE : nvmteextralayers[kLAYER-1]; // TE Outer memories
 
 // Number of bits used for the bins in VMStubeME memories
