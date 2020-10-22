@@ -625,9 +625,9 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 	// The first memory numbers, the position of the first non-zero bit in the mask
 	// Do not change these to ap_uint as cosim will fail
 	static const int firstME = firstMemNumber(maskME); // ME memory
-	static const int firstTEI = (maskTEI) ? static_cast<int>(firstMemNumber(maskTEI)) : 0; // TE Inner memory
-	static const int firstOL = (maskOL) ? static_cast<int>(firstMemNumber(maskOL)) : 0; // TE Overlap memory
-	static const int firstTEO = (maskTEO) ? static_cast<int>(firstMemNumber(maskTEO)) : 0; // TE Inner memory
+	static const int firstTEI = firstMemNumber(maskTEI); // TE Inner memory
+	static const int firstOL = firstMemNumber(maskOL); // TE Overlap memory
+	static const int firstTEO = firstMemNumber(maskTEO); // TE Inner memory
 
 	// Number of memories/VMs for one coarse phi region
 	constexpr int nvmME = (Layer) ? nvmmelayers[Layer-1] : nvmmedisks[Disk-1]; // ME memories
@@ -640,7 +640,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 	ap_uint<kNBits_MemAddr> addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
 
 	// Number of data in each input memory
-	ap_uint<kNBits_MemAddr+1> nTotal = 0; // Total number of inputs
+	ap_uint<kNBits_MemAddr> nTotal = 0; // Total number of inputs
 	typename InputStubMemory<InType>::NEntryT nInputs[maskISsize]; // Array containing the number of inputs. Last two indices are for DISK2S
 	#pragma HLS array_partition variable=nInputs complete dim=0
 
