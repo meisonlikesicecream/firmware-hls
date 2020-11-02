@@ -195,8 +195,8 @@ inline ap_uint<nbits_maxvm> firstMemNumber(const ap_uint<static_cast<int>(maxvmb
 // Clears a 2D array of ap_uints by setting everything to 0
 // Don't put the first dimension in template parameter as synthesis
 // will crash if you're not using OL memories (i.e. they are set to 0)
-template<int dim2Length>
-void clear2DArray(int dim1Length, ap_uint<kNBits_MemAddr> array[][dim2Length]) {
+template<int dim2Length, int nbits>
+void clear2DArray(int dim1Length, ap_uint<nbits> array[][dim2Length]) {
 #pragma HLS inline
 #pragma HLS array_partition variable=array complete dim=0
 	for (int i = 0; i < dim1Length; i++) {
@@ -209,8 +209,8 @@ void clear2DArray(int dim1Length, ap_uint<kNBits_MemAddr> array[][dim2Length]) {
 }
 
 // Clears a 3D array of ap_uints by setting everything to 0
-template<int dim2Length, int dim3Length>
-void clear3DArray(int dim1Length, ap_uint<kNBits_MemAddr> array[][dim2Length][dim3Length]) {
+template<int dim2Length, int dim3Length, int nbits>
+void clear3DArray(int dim1Length, ap_uint<nbits> array[][dim2Length][dim3Length]) {
 #pragma HLS inline
 #pragma HLS array_partition variable=array complete dim=0
 	for (int i = 0; i < dim1Length; i++) {
@@ -649,21 +649,22 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 	ap_uint<kNBits_MemAddr> addrCountTEO[nvmTE][MaxTEOCopies][nmaxbinsperpage]; // Writing of TE Outer stubs
 
 	if (maskME) {
-		clear2DArray<nmaxbinsperpage>(nvmME, addrCountME);
+		clear2DArray(nvmME, addrCountME);
 	}
 	if (maskTEI) {
-		clear2DArray<MaxTEICopies>(nvmTE, addrCountTEI);
+		clear2DArray(nvmTE, addrCountTEI);
 	}
 	if (maskOL) {
-		clear2DArray<MaxOLCopies>(nvmOL, addrCountOL);
+		clear2DArray(nvmOL, addrCountOL);
 	}
 	if (maskTEO) {
-		clear3DArray<MaxTEOCopies, nmaxbinsperpage>(nvmTE, addrCountTEO);
+		clear3DArray(nvmTE, addrCountTEO);
 	}
+
 
 	/////////////////////////////////////
 	// Main Loop
-	constexpr int maxLoop = kMaxProc - kMaxProcOffset(module::VMR);
+	constexpr int maxLoop = kMaxProc - 7;//kMaxProcOffset(module::VMR);
 
 	TOPLEVEL: for (int i = 0; i < maxLoop; ++i) {
 #pragma HLS PIPELINE II=1 rewind
@@ -671,7 +672,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		bool resetNext = false; // Used to reset read_addr
 		bool disk2S = false; // Used to determine if DISK2S
 		bool negDisk = false; // Used to determine if it's negative disk, the last 3 inputs memories
-		bool noStubsLeft = false;
+		bool noStubsLeft = false; // Used to determine if we have processed all stubs
 
 		InputStub<InType> stub;
 		InputStub<DISK2S> stubDisk2S; // Used for disks. TODO: Find a better way to do this...?
@@ -715,7 +716,8 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			--nInputs[3];
 			if (nInputs[3] == 0)
 				resetNext = true;
-		} else {
+		} 
+		else {
 			noStubsLeft = true;
 		}
 
@@ -726,11 +728,11 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		else
 			++read_addr;
 
+		if (noStubsLeft) continue; // End here if we already have processed all stubs
+
 
 		////////////////////////////////////////
 		// AllStub memories
-
-		if (!noStubsLeft) {
 
 			AllStub<OutType> allstub =
 					(disk2S) ? stubDisk2S.raw() : stub.raw();
@@ -746,13 +748,12 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			std::cout << std::endl << "Stub index no. " << i << std::endl << "Out put stub: " << std::hex << allstub.raw() << std::dec
 					<< std::endl;
 #endif // DEBUG
-		}
 
 
 		/////////////////////////////////////////////
 		// ME memories
 
-		if (maskME != 0 && !noStubsLeft) {
+		if (maskME != 0) {
 
 			// Virtual modules to write to
 			int ivmPlus;
@@ -787,6 +788,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 #pragma HLS UNROLL
 				if (maskME[n]) {
 					if ((ivmMinus == n) || (ivmPlus == n)) {
+#pragma HLS dependence variable=addrCountME intra WAR true
 						int memIndex = n-firstME;
 						memoriesME[memIndex].write_mem(bx, bin, stubME, addrCountME[memIndex][bin]);
 						addrCountME[memIndex][bin] += 1;
@@ -800,7 +802,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		// TE Inner Memories
 
 		// No stubs for DISK2S
-		if ((maskTEI != 0) && (!disk2S) && !noStubsLeft) {
+		if ((maskTEI != 0) && (!disk2S)) {
 
 			int ivm;// Which VM to write to
 
@@ -832,6 +834,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 #pragma HLS UNROLL
 					bool passBend = bendCutInnerTable[bendIndex][stubTEI.getBend()];
 					if (passBend) {
+#pragma HLS dependence variable=addrCountTEI intra WAR true
 						memoriesTEI[memIndex][n].write_mem(bx, stubTEI, addrCountTEI[memIndex][n]);
 						addrCountTEI[memIndex][n] += 1; // Count the memory addresses we have written to
 					}
@@ -844,7 +847,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		////////////////////////////////////
 		// TE Outer memories
 
-		if ((maskTEO != 0) && (!disk2S) && !noStubsLeft) {
+		if ((maskTEO != 0) && (!disk2S)) {
 
 			int ivm; // The VM number
 			int bin; // Coarse z. The bin the stub is going to be put in, in the memory
@@ -868,6 +871,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 #pragma HLS UNROLL
 					bool passBend = bendCutOuterTable[bendIndex][stubTEO.getBend()]; // Check if stub passes bend cut
 					if (passBend) {
+#pragma HLS dependence variable=addrCountTEO intra WAR true
 						memoriesTEO[memIndex][n].write_mem(bx, bin, stubTEO, addrCountTEO[memIndex][n][bin]);
 						addrCountTEO[memIndex][n][bin] += 1;
 					}
@@ -880,7 +884,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 		/////////////////////////////////////
 		// OVERLAP Memories
 
-		if (maskOL != 0 && !noStubsLeft) {
+		if (maskOL != 0) {
 
 			assert(Layer == 1 || Layer == 2); // Make sure that only run layer 1 and 2
 
@@ -911,6 +915,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 #pragma HLS UNROLL
 					bool passBend = bendCutOverlapTable[bendIndex][stubOL.getBend()];
 					if (passBend) {
+#pragma HLS dependence variable=addrCountOL intra WAR true
 						memoriesOL[memIndex][n].write_mem(bx, stubOL, addrCountOL[memIndex][n]);
 						addrCountOL[memIndex][n] += 1;
 					}
