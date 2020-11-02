@@ -262,11 +262,16 @@ void MatchCalculator(BXType bx,
   const ap_uint<10> kZ_corr_shiftL456 = (-1-kShift_2S_zderL + kNbitszprojL123 - kNbitszprojL456 + kNbitsrL456 - kNbitsrL123); // icorzshift for L456
   const auto kZ_corr_shift       = (1 <= LAYER <= 3)? kZ_corr_shiftL123 : kZ_corr_shiftL456;                                  // icorzshift_ in emulation
 
+  const auto LUT_matchcut_phi_width = 17;
+  const auto LUT_matchcut_phi_depth = 12;
+  const auto LUT_matchcut_z_width = 13;
+  const auto LUT_matchcut_z_depth = 12;
+
   // Setup look up tables for match cuts
-  ap_uint<17> LUT_matchcut_phi[12];
-  readTable_Cuts<true,LAYER,17,12>(LUT_matchcut_phi);
-  ap_uint<13> LUT_matchcut_z[12];
-  readTable_Cuts<false,LAYER,13,12>(LUT_matchcut_z);
+  ap_uint<LUT_matchcut_phi_width> LUT_matchcut_phi[LUT_matchcut_phi_depth];
+  readTable_Cuts<true,LAYER,LUT_matchcut_phi_width,LUT_matchcut_phi_depth>(LUT_matchcut_phi);
+  ap_uint<LUT_matchcut_z_width> LUT_matchcut_z[LUT_matchcut_z_depth];
+  readTable_Cuts<false,LAYER,LUT_matchcut_z_width,LUT_matchcut_z_depth>(LUT_matchcut_z);
 
   // Initialize MC delta phi cut variables
   ap_uint<17> best_delta_phi;
@@ -283,9 +288,8 @@ void MatchCalculator(BXType bx,
   ap_uint<kNBits_MemAddr> ncm6 = 0;
   ap_uint<kNBits_MemAddr> ncm7 = 0;
   ap_uint<kNBits_MemAddr> ncm8 = 0;
-  ap_uint<7> maximum = kMaxProc;
-  ap_uint<14> total  = 0;
-  ap_uint<7> ncm = 0;
+  ap_uint<kNBits_MemAddr+1> total  = 0;
+  ap_uint<kNBits_MemAddr> ncm = 0;
 
   // Initialize read addresses for candidate matches
   ap_uint<kNBits_MemAddr> addr1 = 0;  
@@ -388,14 +392,14 @@ void MatchCalculator(BXType bx,
   //-------------------------------- DATA PROCESSING STARTS ---------------------------------------------------
   //-----------------------------------------------------------------------------------------------------------
   // declare counters for each of the 8 output VMProj // !!!
-  int nmcout1 = 0;
-  int nmcout2 = 0;
-  int nmcout3 = 0;
-  int nmcout4 = 0;
-  int nmcout5 = 0;
-  int nmcout6 = 0;
-  int nmcout7 = 0;
-  int nmcout8 = 0;  
+  ap_uint<kNBits_MemAddr> nmcout1 = 0;
+  ap_uint<kNBits_MemAddr> nmcout2 = 0;
+  ap_uint<kNBits_MemAddr> nmcout3 = 0;
+  ap_uint<kNBits_MemAddr> nmcout4 = 0;
+  ap_uint<kNBits_MemAddr> nmcout5 = 0;
+  ap_uint<kNBits_MemAddr> nmcout6 = 0;
+  ap_uint<kNBits_MemAddr> nmcout7 = 0;
+  ap_uint<kNBits_MemAddr> nmcout8 = 0;  
   MC_LOOP: for (ap_uint<kNBits_MemAddr> istep = 0; istep < kMaxProc - kMaxProcOffset(module::MC); istep++)
   {
 
@@ -413,7 +417,7 @@ void MatchCalculator(BXType bx,
 
     // Count up total number of CMs *and protect incase of overflow)
     total  = ncm1+ncm2+ncm3+ncm4+ncm5+ncm6+ncm7+ncm8; 
-    ncm    = (total > maximum)? maximum : total.range(7,0);
+    ncm    = (total > kMaxProc)? kMaxProc : total.range(7,0);
 
     // pipeline variables
     bool read_L1_1_next = false;
@@ -791,18 +795,7 @@ void MatchCalculator(BXType bx,
       projseed_next  = projseed;
     }
 
-    if (istep==0){
-      // Reset output memories
-      fullmatch[0].clear(bx);
-      fullmatch[1].clear(bx);
-      fullmatch[2].clear(bx);
-      fullmatch[3].clear(bx);
-      fullmatch[4].clear(bx);
-      fullmatch[5].clear(bx);
-      fullmatch[6].clear(bx);
-      fullmatch[7].clear(bx);
-    }
-    else if(newtracklet && goodmatch==true) { // Write out only the best match, based on the seeding 
+    if(newtracklet && goodmatch==true) { // Write out only the best match, based on the seeding 
       switch (projseed) {
       case 0:
       fullmatch[0].write_mem(bx,bestmatch,nmcout1);//(newtracklet && goodmatch==true && projseed==0)); // L1L2 seed

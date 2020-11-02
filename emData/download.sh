@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
-# https://github.com/cms-L1TK/cmssw - L1TK-dev-11_2_0_pre6 - 10-05-2020 (Replace with tag name)
+# fw_synch_201005
 memprints_url="https://cernbox.cern.ch/index.php/s/y7IWeDG4x7Sg7Im/download"
 luts_url="https://cernbox.cern.ch/index.php/s/DuhCjcykSHZLRhM/download"
-
-# https://github.com/aehart/cmssw/tree/hex_format
-#memprints_url="https://cernbox.cern.ch/index.php/s/CipX7CfTXIj1lcK/download"
-#luts_url="https://cernbox.cern.ch/index.php/s/UDSvClVZksBr1Pq/download"
 
 # fw_synch_200515
 #memprints_url="https://cernbox.cern.ch/index.php/s/QvV86Qcc8n9R4sg/download"
@@ -17,7 +13,7 @@ luts_url="https://cernbox.cern.ch/index.php/s/DuhCjcykSHZLRhM/download"
 declare -a processing_modules=(
   # VMRouter
   "VMR_L1PHIE"
-  "VMR_L2PHID"
+  "VMR_D1PHIA"
 
   # TrackletEngine
   "TE_L1PHIE18_L2PHIC17"

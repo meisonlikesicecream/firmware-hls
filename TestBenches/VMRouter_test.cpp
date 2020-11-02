@@ -1,6 +1,6 @@
 // Test bench for VMRouter
-#include "VMRouterTop.h"
-//#include "VMRouterTop_D1PHIA.h"
+//#include "VMRouterTop.h"
+#include "VMRouterTop_L2PHID.h"
 
 #include <algorithm>
 #include <iterator>
@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const int nEvents = 100;  //number of events to run
+const int nEvents = 1;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -174,14 +174,14 @@ int main() {
 
   ///////////////////////////
   // open input files
-    cout << "Open files..." << endl;
+  cout << "Open files..." << endl;
 
-    ifstream fin_inputstub[numInputs];
+  ifstream fin_inputstub[numInputs];
 
-    for (unsigned int i = 0; i < numInputs; i++) {
-      bool valid = openDataFile(fin_inputstub[i], inputNameList[i] + fileEnding);
-      if (not valid) return -1;
-    }
+  for (unsigned int i = 0; i < numInputs; i++) {
+    bool valid = openDataFile(fin_inputstub[i], inputNameList[i] + fileEnding);
+    if (not valid) return -1;
+  }
 
 
   ///////////////////////////
@@ -247,6 +247,29 @@ int main() {
   cout << "Start event loop ..." << endl;
   for (unsigned int ievt = 0; ievt < nEvents; ++ievt) {
     cout << "Event: " << dec << ievt << endl;
+
+    // clear output memories
+    for (int i=0; i<maxASCopies; ++i) {
+      memoriesAS[i].clear();
+    }
+    for (int i=0; i<nvmME; ++i) {
+      memoriesME[i].clear();
+    }
+    for (int i=0; i<nvmTEI; ++i) {
+      for (int j=0; j<maxTEICopies; j++) {
+        memoriesTEI[i][j].clear();
+      }
+    }
+    for (int i=0; i<nvmOL; ++i) {
+      for (int j=0; j<maxOLCopies; j++) {
+        memoriesOL[i][j].clear();
+      }
+    }
+    for (int i=0; i<nvmTEO; ++i) {
+      for (int j=0; j<maxTEOCopies; j++) {
+        memoriesTEI[i][j].clear();
+      }
+    }
 
     int num2S = 0; // Keeps track of how many DISK 2S modules we have written to
 
@@ -328,6 +351,8 @@ int main() {
   } // end of event loop
 
 	cerr << "Exiting with return value " << err << endl;
+	// This is necessary because HLS seems to only return an 8-bit error count, so if err%256==0, the test bench can falsely pass
+	if (err > 255) err = 255;
 	return err;
 
 }

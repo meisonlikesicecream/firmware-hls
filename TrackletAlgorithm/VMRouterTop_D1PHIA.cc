@@ -32,8 +32,9 @@ void VMRouterTop(BXType bx,
 	// LUT with phi corrections to project the stub to the nominal radius.
 	// Only used by layers.
 	// Indexed using phi and bend bits
-	// 	static const int phiCorrtTable[bendCutTableSize] =
+	// static const int phiCorrtTable[bendCutTableSize] =
 	// #include "../emData/VMR/tables/VMPhiCorrXX.tab"
+
 
 	// LUT with the Z/R bits for TE memories
 	// Contain information about where in z to look for valid stub pairs
@@ -92,6 +93,7 @@ void VMRouterTop(BXType bx,
 
 	ap_uint<1> tmpBendInnerTable4_n3[bendCutTableSize] =
 #include "../emData/VMR/tables/VMSTE_D1PHIA4n3_vmbendcut.tab"
+
 
 	// Combine all the temporary tables into one big table
 	static const ap_uint<bendCutTableSize> bendCutInnerTable[] = {
@@ -228,7 +230,7 @@ void VMRouterTop(BXType bx,
 		maskOL, nullptr,
 		// TEOuter memories
 		maskTEO, memoriesTEO
-		 );
+		);
 
 	return;
 }
