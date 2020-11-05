@@ -1,6 +1,6 @@
 // Test bench for VMRouter
+//#include "VMRouterTop.h"
 #include "VMRouterTop.h"
-//#include "VMRouterTop_D1PHIA.h"
 
 #include <algorithm>
 #include <iterator>
@@ -31,7 +31,7 @@ bool findFileNames(string fileDirStart, string wireFileName, string memID, strin
 
   ifstream wireFile; // Will contain the wiring file
 
-  int nvmMEmories = 0; // Number of memories found
+  int nvmMemories = 0; // Number of memories found
   char delimeter = (memID.substr(0,2) == "IL") ? ' ' : 'n'; // Different delimeter if input or output memories
 
   bool valid = openDataFile(wireFile, wireFileName); // Open the wiring file
@@ -54,9 +54,9 @@ bool findFileNames(string fileDirStart, string wireFileName, string memID, strin
 
       // Add the start of the memory name to the list if we haven't added it before, otherwise increment the number of copies
       if (isInNameList == nameList+arraySize) {
-        nameList[nvmMEmories] = tmpMemoryDir;
-        numCopiesArray[nvmMEmories]++;
-        nvmMEmories++;
+        nameList[nvmMemories] = tmpMemoryDir;
+        numCopiesArray[nvmMemories]++;
+        nvmMemories++;
       } else {
         numCopiesArray[distance(nameList, isInNameList)]++;
       }
@@ -103,7 +103,7 @@ int main() {
   string nameListME[nvmME];
   int numCopiesME[nvmME] = {0}; // Array containing the number of copies of each memory
 
-  string meDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
+  string meDir = testDataDirectory + "/VMStubs"; // Directory of ME stubs, including the first part of the file name
   string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
 
   findFileNames<nvmME>(meDir, wireFileName, meMemID, nameListME, numCopiesME);
@@ -114,7 +114,7 @@ int main() {
   int numCopiesTEI[nvmTEI] = {0}; // Array containing the number of copies of each memory
 
   if (maxTEICopies > 1) {
-    string teiDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string teiDir = testDataDirectory + "/VMStubs"; // Directory of TE stubs, including the first part of the file name
     string teiMemID = (kLAYER != 2) ? "VMSTE_" + layerID : string("VMSTE_L2PHI") + extraPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
 
     findFileNames<nvmTEI>(teiDir, wireFileName, teiMemID, nameListTEI, numCopiesTEI);
@@ -126,7 +126,7 @@ int main() {
   int numCopiesOL[nvmOL] = {0}; // Array containing the number of copies of each memory
 
   if (maxOLCopies > 1) {
-    string olDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string olDir = testDataDirectory + "/VMStubs"; // Directory of TE stubs, including the first part of the file name
     string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + overlapPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
 
     findFileNames<nvmOL>(olDir, wireFileName, olMemID, nameListOL, numCopiesOL);
@@ -138,7 +138,7 @@ int main() {
   int numCopiesTEO[nvmTEO] = {0}; // Array containing the number of copies of each memory
 
   if (maxTEOCopies > 1) {
-    string teoDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
+    string teoDir = testDataDirectory + "/VMStubs"; // Directory of TE stubs, including the first part of the file name
     string teoMemID; // TE Outer memory ID for the specified phi region
 
     if (kDISK == 1) {
