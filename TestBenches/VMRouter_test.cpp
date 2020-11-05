@@ -25,7 +25,7 @@ const int nEvents = 100;  //number of events to run
 // and adds them to the fileNames array with the memory files directory, excluding the copies nX.
 // The number of copies are kept track in the numCopiesArray.
 // E.g. finds all memories that start with "VMSME_L1PHIE", such as "VMSME_L1PHIE17" etc.
-// Returns 0 if wiring file isn't found.
+// Returns false if wiring file isn't found.
 template<int arraySize>
 bool findFileNames(string fileDirStart, string wireFileName, string memID, string nameList[arraySize], int numCopiesArray[arraySize]) {
 
@@ -39,7 +39,7 @@ bool findFileNames(string fileDirStart, string wireFileName, string memID, strin
   // Check if the wiring file was opened properly.
   if (not valid) {
     cout << "Could not find wiring file." << endl;
-    return 0;
+    return false;
   }
 
   // Loop over all lines in the wiring file
@@ -62,8 +62,7 @@ bool findFileNames(string fileDirStart, string wireFileName, string memID, strin
       }
     }
   }
-
-  return 1;
+  return true;
 }
 
 
