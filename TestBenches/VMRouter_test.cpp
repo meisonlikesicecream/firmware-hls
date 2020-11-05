@@ -78,8 +78,8 @@ int main() {
   string fileEnding = (sector < 10) ? "_0" + to_string(sector) + ".dat" :  "_" + to_string(sector) + ".dat"; //All files ends with .dat. "_XX" specifies which sector
 
   // Uses wires_hourglass.dat wiring file
-  string wireFileName = "emData/wires_hourglass.dat"; // The wiring file name with directory
-  string testDataDirectory = "emData/VMR/VMR_" + layerID; // Directory for the test data
+  string wireFileName = "wires_hourglass.dat"; // The wiring file name with directory
+  string testDataDirectory = "VMR_" + layerID; // Directory for the test data
 
   char overlapPhiRegion[] = {'X', 'Y', 'Z', 'W', 'Q', 'R', 'S', 'T'}; // Special naming for the TE overlap memories, and outer memories in Disk 1
   char extraPhiRegion[] = {'I', 'J', 'K', 'L'}; // Special naming for the extra memories TEInner L2 and TEOuter L3.
