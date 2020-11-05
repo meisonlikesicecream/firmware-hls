@@ -5,7 +5,7 @@ on: # Controls when the action will run.
     branches: [feat_CI]
   pull_request:
     branches: [master]
-
+    
 env:
   current_branch: 'master' # fallback branch
 

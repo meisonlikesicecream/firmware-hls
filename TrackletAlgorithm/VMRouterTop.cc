@@ -10,7 +10,7 @@
 //          - add/remove pragmas depending on inputStub in VMRouterTop.cc
 //          - the call to VMRouter() in VMRouterTop.cc
 //          - the included top function in VMRouter_test.cpp (if file name is changed)
-//          - the top function in script_VMR.tcl (if file name is changed)
+//          - the top function and memory directory in script_VMR.tcl (if file name is changed)
 //          - add the phi region in emData/download.sh, make sure to also run clean
 
 

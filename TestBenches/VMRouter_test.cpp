@@ -16,7 +16,7 @@ const int nEvents = 100;  //number of events to run
 
 // NOTE: to run a different phi region, change the following
 //          - the included top function in VMRouter_test.cpp (if file name is changed)
-//          - the top function in script_VMR.tcl (if file name is changed)
+//          - the top function and memory directory in script_VMR.tcl (if file name is changed)
 //          - add the phi region in emData/download.sh, make sure to also run clean
 //          - and the changes listed in VMRouterTop.cc/h
 
