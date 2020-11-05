@@ -51,7 +51,7 @@ constexpr unsigned int nvmteextralayers[3] = { 0, 4, 4 }; // Number of extra TEI
 constexpr int nbitsvmlayer[6] = { 5, 5, 4, 5, 4, 5 }; // Could be computed using the number of VMs...
 constexpr int nbitsvmdisk[5] = { 4, 4, 4, 4, 4 };
 constexpr int nbitsvmoverlap[2] = { 4, 3 };
-constexpr int nbitsvmextra[3] = { 0, 4, 4};
+constexpr int nbitsvmextra[3] = { 0, 4, 4 };
 
 // Number of most significant bits (MSBs) of z and r used for index in the LUTs
 constexpr int nbitsztablelayer = 7;
@@ -309,16 +309,16 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 	ap_uint<nbitszfinebintable + nbitsrfinebintable> finebinindex = (indexz * rbins) + indexr;
 
 	// Get the corrected r/z position
-	auto rzcorr = fineBinTable[finebinindex];
+	auto rzCorr = fineBinTable[finebinindex];
 
 	// Coarse z. The bin the stub is going to be put in, in the memory
-	bin = rzcorr >> nfinerzbits; // 3 bits, i.e. max 8 bins within each VM
+	bin = rzCorr >> nfinerzbits; // 3 bits, i.e. max 8 bins within each VM
 
 	if (negDisk)
 		bin += 1 << MEBinsBits; // bin 8-16 are for negative disks
 
 	// Set rzfine, i.e. the r/z bits within a coarse r/z region
-	auto rzfine = rzcorr & ((1 << nfinerzbits) - 1); // the 3 LSB as rzfine
+	auto rzfine = rzCorr & ((1 << nfinerzbits) - 1); // the 3 LSB as rzfine
 	stubME.setFineZ(rzfine);
 
 	assert(rzfine >= 0);
@@ -716,8 +716,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			--nInputs[3];
 			if (nInputs[3] == 0)
 				resetNext = true;
-		} 
-		else {
+		} else {
 			noStubsLeft = true;
 		}
 
