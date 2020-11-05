@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const int nEvents = 100;  //number of events to run
+const int nEvents = 1;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -27,7 +27,7 @@ const int nEvents = 100;  //number of events to run
 // E.g. finds all memories that start with "VMSME_L1PHIE", such as "VMSME_L1PHIE17" etc.
 // Returns 0 if wiring file isn't found.
 template<int arraySize>
-bool findFileNames(string fileDirStart, string wireFileName, string memID, string nameList[arraySize], int numCopiesArray[arraySize]) {
+bool findFileNames(string wireFileName, string memID, string nameList[arraySize], int numCopiesArray[arraySize]) {
 
   ifstream wireFile; // Will contain the wiring file
 
@@ -48,7 +48,7 @@ bool findFileNames(string fileDirStart, string wireFileName, string memID, strin
     // If we find the memory we are looking for
     if (inputLine.find(memID) != string::npos) {
 
-      string tmpMemoryDir = fileDirStart + "_" + inputLine.substr(0, inputLine.find(delimeter)); // The directory and the name of the memory (first part of the line)
+      string tmpMemoryDir = inputLine.substr(0, inputLine.find(delimeter)); // The directory and the name of the memory (first part of the line)
 
       auto isInNameList = find(nameList, nameList+arraySize, tmpMemoryDir); // Check if tmpMemoryDir is in nameList
 
@@ -66,6 +66,48 @@ bool findFileNames(string fileDirStart, string wireFileName, string memID, strin
   return 1;
 }
 
+// Reads bendcut table and returns it as an ap_uint
+ap_uint<bendCutTableSize> readBendCutTable(string tableName) {
+
+  ifstream file;
+  openDataFile(file, tableName);
+
+  ap_uint<bendCutTableSize> table;
+  int i = 0;
+
+  for (string inputLine; getline(file, inputLine); ) {
+    if ((inputLine != "{") && (inputLine != "};")) {
+      int value = inputLine.at(0) - '0'; // Convert char to int
+      table[i] = value;
+      i++;
+    }
+  }
+
+  return table;
+}
+
+
+// Creates a bendcut table
+// Each element in array is an ap_uint and correspond to one TE memory
+template <int lutSize, int arraySize>
+void createBendCutTable(ap_uint<bendCutTableSize> lutTable[lutSize], string nameList[arraySize], int numCopiesArray[arraySize]) {
+
+  int numMaxCopies = lutSize/arraySize;
+
+  for (int i = 0; i < arraySize; i++) {
+    for (int j = 0; j < numMaxCopies; j++) {
+
+      int tableIndex = i * numMaxCopies + j;
+
+      if (j < numCopiesArray[i]) {
+        string tableName = "tables/" + nameList[i] + "n" + to_string(j+1) + "_vmbendcut.tab";
+        lutTable[tableIndex] = readBendCutTable(tableName);
+      } else {
+        lutTable[tableIndex] = 0;
+      }
+    }
+  }
+}
 
 
 int main() {
@@ -88,11 +130,10 @@ int main() {
   string inputNameList[numInputs];
   int inputNumCopies[numInputs] = {0}; // Array containing the number of copies of each memory
 
-  string inputDir = testDataDirectory + "/InputStubs"; // Directory of InputStubs, including the first part of the file name
   string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
 
   // Get the input file names and check that the wiring file can be opened properly
-  if (not findFileNames<numInputs>(inputDir, wireFileName, inMemID, inputNameList, inputNumCopies)) return -1;
+  if (not findFileNames<numInputs>(wireFileName, inMemID, inputNameList, inputNumCopies)) return -1;
 
 
   // Start of AllStub file names, excluding the copy number
@@ -103,10 +144,9 @@ int main() {
   string nameListME[nvmME];
   int numCopiesME[nvmME] = {0}; // Array containing the number of copies of each memory
 
-  string meDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
   string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
 
-  findFileNames<nvmME>(meDir, wireFileName, meMemID, nameListME, numCopiesME);
+  findFileNames<nvmME>(wireFileName, meMemID, nameListME, numCopiesME);
 
 
   // Start of TEInnerStub file names, excluding the copy number "nX"
@@ -114,10 +154,9 @@ int main() {
   int numCopiesTEI[nvmTEI] = {0}; // Array containing the number of copies of each memory
 
   if (maxTEICopies > 1) {
-    string teiDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string teiMemID = (kLAYER != 2) ? "VMSTE_" + layerID : string("VMSTE_L2PHI") + extraPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
 
-    findFileNames<nvmTEI>(teiDir, wireFileName, teiMemID, nameListTEI, numCopiesTEI);
+    findFileNames<nvmTEI>(wireFileName, teiMemID, nameListTEI, numCopiesTEI);
   }
 
 
@@ -126,10 +165,9 @@ int main() {
   int numCopiesOL[nvmOL] = {0}; // Array containing the number of copies of each memory
 
   if (maxOLCopies > 1) {
-    string olDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + overlapPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
 
-    findFileNames<nvmOL>(olDir, wireFileName, olMemID, nameListOL, numCopiesOL);
+    findFileNames<nvmOL>(wireFileName, olMemID, nameListOL, numCopiesOL);
   }
 
 
@@ -138,7 +176,6 @@ int main() {
   int numCopiesTEO[nvmTEO] = {0}; // Array containing the number of copies of each memory
 
   if (maxTEOCopies > 1) {
-    string teoDir = testDataDirectory + "/VMStubs"; // Directory of MEStubs, including the first part of the file name
     string teoMemID; // TE Outer memory ID for the specified phi region
 
     if (kDISK == 1) {
@@ -151,7 +188,7 @@ int main() {
       teoMemID = "VMSTE_" + layerID;
     }
 
-    findFileNames<nvmTEO>(teoDir, wireFileName, teoMemID, nameListTEO, numCopiesTEO);
+    findFileNames<nvmTEO>(wireFileName, teoMemID, nameListTEO, numCopiesTEO);
   }
 
 
@@ -179,7 +216,7 @@ int main() {
   ifstream fin_inputstub[numInputs];
 
   for (unsigned int i = 0; i < numInputs; i++) {
-    bool valid = openDataFile(fin_inputstub[i], inputNameList[i] + fileEnding);
+    bool valid = openDataFile(fin_inputstub[i], testDataDirectory + "/InputStubs_" + inputNameList[i] + fileEnding);
     if (not valid) return -1;
   }
 
@@ -199,7 +236,7 @@ int main() {
   ifstream fout_vmstubme[nvmME];
 
   for (unsigned int i = 0; i < nvmME; i++) {
-    bool valid =  openDataFile(fout_vmstubme[i], nameListME[i] + "n1" + fileEnding);
+    bool valid =  openDataFile(fout_vmstubme[i], testDataDirectory + "/VMStubs_" + nameListME[i] + "n1" + fileEnding);
     if (not valid) return -1;
   }
 
@@ -209,7 +246,7 @@ int main() {
   if (maxTEICopies > 1) {
     for (unsigned int i = 0; i < nvmTEI; i++) {
       for (unsigned int j = 0; j < numCopiesTEI[i]; j++) {
-        bool valid = openDataFile(fout_vmstubtei[i][j], nameListTEI[i] + "n" + to_string(j+1) + fileEnding);
+        bool valid = openDataFile(fout_vmstubtei[i][j], testDataDirectory + "/VMStubs_" + nameListTEI[i] + "n" + to_string(j+1) + fileEnding);
         if (not valid) return -1;
       }
     }
@@ -221,7 +258,7 @@ int main() {
   if (maxOLCopies > 1) {
     for (unsigned int i = 0; i < nvmOL; i++) {
       for (unsigned int j = 0; j < numCopiesOL[i]; j++) {
-        bool valid = openDataFile(fout_vmstubteol[i][j], nameListOL[i] + "n" + to_string(j+1) + fileEnding);
+        bool valid = openDataFile(fout_vmstubteol[i][j], testDataDirectory + "/VMStubs_" + nameListOL[i] + "n" + to_string(j+1) + fileEnding);
         if (not valid) return -1;
       }
     }
@@ -233,17 +270,30 @@ int main() {
   if (maxTEOCopies > 1) {
     for (unsigned int i = 0; i < nvmTEO; i++) {
       for (unsigned int j = 0; j < numCopiesTEO[i]; j++) {
-        bool valid = openDataFile(fout_vmstubteo[i][j], nameListTEO[i] + "n" + to_string(j+1) + fileEnding);
+        bool valid = openDataFile(fout_vmstubteo[i][j], testDataDirectory + "/VMStubs_" + nameListTEO[i] + "n" + to_string(j+1) + fileEnding);
         if (not valid) return -1;
       }
     }
   }
 
-  // error count
-  int err = 0;
+  //////////////////////////////////
+  // Open LUTs
+
+  ap_uint<bendCutTableSize> bendCutInnerTable[nvmTEI*maxTEICopies];
+  ap_uint<bendCutTableSize> bendCutOverlapTable[nvmOL*maxOLCopies];
+  ap_uint<bendCutTableSize> bendCutOuterTable[nvmTEO*maxTEOCopies];
+
+  if (maxTEICopies > 1) createBendCutTable<nvmTEI*maxTEICopies, nvmTEI>(bendCutInnerTable, nameListTEI, numCopiesTEI);
+  if (maxOLCopies > 1) createBendCutTable<nvmOL*maxOLCopies, nvmOL>(bendCutOverlapTable, nameListOL, numCopiesOL);
+  if (maxTEOCopies > 1) createBendCutTable<nvmTEO*maxTEOCopies, nvmTEO>(bendCutOuterTable, nameListTEO, numCopiesTEO);
+
 
   ///////////////////////////
   // loop over events
+
+  // error count
+  int err = 0;
+
   cout << "Start event loop ..." << endl;
   for (unsigned int ievt = 0; ievt < nEvents; ++ievt) {
     cout << "Event: " << dec << ievt << endl;
@@ -297,13 +347,13 @@ int main() {
 #endif
         , memoriesAS, memoriesME
 #if kLAYER == 1 || kLAYER  == 2 || kLAYER == 3 || kLAYER == 5 || kDISK == 1 || kDISK == 3
-        , memoriesTEI
+        , bendCutInnerTable, memoriesTEI
 #endif
 #if kLAYER == 1 || kLAYER == 2
-        , memoriesOL
+        , bendCutOverlapTable, memoriesOL
 #endif
 #if kLAYER == 2 || kLAYER == 3 || kLAYER == 4 || kLAYER == 6 || kDISK == 1 || kDISK == 2 || kDISK == 4
-        , memoriesTEO
+        , bendCutOuterTable, memoriesTEO
 #endif
       );
 

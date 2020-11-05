@@ -73,8 +73,8 @@ void VMRouterTop(BXType bx,
 	// Output memories
 	AllStubMemory<outputType> allStub[maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[nvmME],
-	VMStubTEInnerMemory<outputType> memoriesTEI[nvmTEI][maxTEICopies],
-	VMStubTEInnerMemory<BARRELOL> memoriesOL[nvmOL][maxOLCopies]
+	ap_uint<bendCutTableSize> bendCutInnerTable[nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nvmTEI][maxTEICopies],
+	ap_uint<bendCutTableSize> bendCutOverlapTable[nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nvmOL][maxOLCopies]
 	);
 
 #endif // TrackletAlgorithm_VMRouterTop_h
