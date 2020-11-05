@@ -21,8 +21,8 @@ class MemoryTemplateBinned{
 public:
   static constexpr unsigned int kNBitDataAddr = NBIT_ADDR-NBIT_BIN;
   typedef ap_uint<NBIT_BX> BunchXingT;
-  typedef ap_uint<kNBitDataAddr> NEntryT;
-  
+  typedef ap_uint<kNBitDataAddr+1> NEntryT;
+
 protected:
   enum BitWidths {
     kNBxBins = 1<<NBIT_BX,
@@ -32,7 +32,7 @@ protected:
 
   DataType dataarray_[kNBxBins][kNMemDepth];  // data array
   NEntryT nentries_[kNBxBins][kNSlots];     // number of entries
-  
+
 public:
 
   unsigned int getDepth() const {return kNMemDepth;}
@@ -52,7 +52,7 @@ public:
     // TODO: check if valid
     return dataarray_[ibx][index];
   }
-  
+
   DataType read_mem(BunchXingT ibx, ap_uint<NBIT_BIN> slot,
 		    ap_uint<NBIT_ADDR> index) const
   {
@@ -79,7 +79,7 @@ public:
 
   // Methods for C simulation only
 #ifndef __SYNTHESIS__
-  
+
   MemoryTemplateBinned()
   {
         clear();
@@ -163,9 +163,9 @@ public:
   }
 
   static constexpr int getWidth() {return DataType::getWidth();}
-  
+
 #endif
-  
+
 };
 
 #endif
