@@ -666,7 +666,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 
 	/////////////////////////////////////
 	// Main Loop
-	constexpr int maxLoop = kMaxProc - 7;//kMaxProcOffset(module::VMR);
+	constexpr int maxLoop = kMaxProc;
 
 	TOPLEVEL: for (int i = 0; i < maxLoop; ++i) {
 #pragma HLS PIPELINE II=1 rewind
