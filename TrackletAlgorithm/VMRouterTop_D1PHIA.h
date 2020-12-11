@@ -7,8 +7,9 @@
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
 // NOTE: To run this VMR, change the following
-//          - the included top function in VMRouter_test.cpp to "#include "VMRouterTop.h""
+//          - the included top function in VMRouter_test.cpp to "#include "VMRouterTop_D1PHIA.h""
 //          - the top function in script_VMR.tcl to "add_files ../TrackletAlgorithm/VMRouterTop_D1PHIA.cc -cflags "$CFLAGS""
+//          - the memory directory in script_VMR.tcl "to add_files -tb ../emData/VMR/VMR_D1PHIA/"
 
 
 //////////////////////////////////

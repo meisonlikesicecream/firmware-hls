@@ -51,7 +51,7 @@ constexpr unsigned int nvmteextralayers[3] = { 0, 4, 4 }; // Number of extra TEI
 constexpr int nbitsvmlayer[6] = { 5, 5, 4, 5, 4, 5 }; // Could be computed using the number of VMs...
 constexpr int nbitsvmdisk[5] = { 4, 4, 4, 4, 4 };
 constexpr int nbitsvmoverlap[2] = { 4, 3 };
-constexpr int nbitsvmextra[3] = { 0, 4, 4};
+constexpr int nbitsvmextra[3] = { 0, 4, 4 };
 
 // Number of most significant bits (MSBs) of z and r used for index in the LUTs
 constexpr int nbitsztablelayer = 7;
@@ -85,6 +85,8 @@ constexpr int maxinput = 4;
 constexpr int nmaxbinsperpagelayer = 8;
 constexpr int nmaxbinsperpagedisk = 16;
 
+// Number of bits used for binning TE Outer memories, i.e. 1 << NBitsBinTEO bins
+constexpr int NBitsBinTEO = 3;
 
 //////////////////////////////////////
 // Functions used by the VMR
@@ -316,16 +318,16 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 	ap_uint<nbitszfinebintable + nbitsrfinebintable> finebinindex = (indexz * rbins) + indexr;
 
 	// Get the corrected r/z position
-	auto rzcorr = fineBinTable[finebinindex];
+	auto rzCorr = fineBinTable[finebinindex];
 
 	// Coarse z. The bin the stub is going to be put in, in the memory
-	bin = rzcorr >> nfinerzbits; // 3 bits, i.e. max 8 bins within each VM
+	bin = rzCorr >> nfinerzbits; // 3 bits, i.e. max 8 bins within each VM
 
 	if (negDisk)
 		bin += 1 << MEBinsBits; // bin 8-16 are for negative disks
 
 	// Set rzfine, i.e. the r/z bits within a coarse r/z region
-	auto rzfine = rzcorr & ((1 << nfinerzbits) - 1); // the 3 LSB as rzfine
+	auto rzfine = rzCorr & ((1 << nfinerzbits) - 1); // the 3 LSB as rzfine
 	stubME.setFineZ(rzfine);
 
 	assert(rzfine >= 0);
@@ -680,10 +682,10 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 
 	//Create variables that keep track of which memory address to read and write to
 	ap_uint<kNBits_MemAddr> read_addr(0); // Reading of input stubs
-	ap_uint<kNBits_MemAddr> addrCountME[nvmME][nmaxbinsperpage]; // Writing of ME stubs
+	ap_uint<kNBits_MemAddr-NBitsBin+1> addrCountME[nvmME][nmaxbinsperpage]; // Writing of ME stubs
 	ap_uint<kNBits_MemAddr> addrCountTEI[nvmTEI][MaxTEICopies]; // Writing of TE Inner stubs
 	ap_uint<kNBits_MemAddr> addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
-	ap_uint<kNBits_MemAddr> addrCountTEO[nvmTEO][MaxTEOCopies][nmaxbinsperpage]; // Writing of TE Outer stubs
+	ap_uint<kNBits_MemAddr-NBitsBinTEO+1> addrCountTEO[nvmTEO][MaxTEOCopies][nmaxbinsperpage]; // Writing of TE Outer stubs
 
 	if (maskME) {
 		clear2DArray(nvmME, addrCountME);
@@ -701,7 +703,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 
 	/////////////////////////////////////
 	// Main Loop
-	constexpr int maxLoop = kMaxProc - 7;//kMaxProcOffset(module::VMR);
+	constexpr int maxLoop = kMaxProc;
 
 	TOPLEVEL: for (int i = 0; i < maxLoop; ++i) {
 #pragma HLS PIPELINE II=1 rewind
@@ -753,8 +755,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			--nInputs[3];
 			if (nInputs[3] == 0)
 				resetNext = true;
-		} 
-		else {
+		} else {
 			noStubsLeft = true;
 		}
 

@@ -16,7 +16,7 @@ const int nEvents = 100;  //number of events to run
 
 // NOTE: to run a different phi region, change the following
 //          - the included top function in VMRouter_test.cpp (if file name is changed)
-//          - the top function in script_VMR.tcl (if file name is changed)
+//          - the top function and memory directory in script_VMR.tcl (if file name is changed)
 //          - add the phi region in emData/download.sh, make sure to also run clean
 //          - and the changes listed in VMRouterTop.cc/h
 
@@ -25,13 +25,13 @@ const int nEvents = 100;  //number of events to run
 // and adds them to the fileNames array with the memory files directory, excluding the copies nX.
 // The number of copies are kept track in the numCopiesArray.
 // E.g. finds all memories that start with "VMSME_L1PHIE", such as "VMSME_L1PHIE17" etc.
-// Returns 0 if wiring file isn't found.
+// Returns false if wiring file isn't found.
 template<int arraySize>
 bool findFileNames(string wireFileName, string memID, string nameList[arraySize], int numCopiesArray[arraySize]) {
 
   ifstream wireFile; // Will contain the wiring file
 
-  int nvmMEmories = 0; // Number of memories found
+  int nvmMemories = 0; // Number of memories found
   char delimeter = (memID.substr(0,2) == "IL") ? ' ' : 'n'; // Different delimeter if input or output memories
 
   bool valid = openDataFile(wireFile, wireFileName); // Open the wiring file
@@ -39,7 +39,7 @@ bool findFileNames(string wireFileName, string memID, string nameList[arraySize]
   // Check if the wiring file was opened properly.
   if (not valid) {
     cout << "Could not find wiring file." << endl;
-    return 0;
+    return false;
   }
 
   // Loop over all lines in the wiring file
@@ -54,16 +54,15 @@ bool findFileNames(string wireFileName, string memID, string nameList[arraySize]
 
       // Add the start of the memory name to the list if we haven't added it before, otherwise increment the number of copies
       if (isInNameList == nameList+arraySize) {
-        nameList[nvmMEmories] = tmpMemoryDir;
-        numCopiesArray[nvmMEmories]++;
-        nvmMEmories++;
+        nameList[nvmMemories] = tmpMemoryDir;
+        numCopiesArray[nvmMemories]++;
+        nvmMemories++;
       } else {
         numCopiesArray[distance(nameList, isInNameList)]++;
       }
     }
   }
-
-  return 1;
+  return true;
 }
 
 // Reads bendcut table and returns it as an ap_uint
@@ -119,7 +118,7 @@ int main() {
   string fileEnding = (sector < 10) ? "_0" + to_string(sector) + ".dat" :  "_" + to_string(sector) + ".dat"; //All files ends with .dat. "_XX" specifies which sector
 
   // Uses wires_hourglass.dat wiring file
-  string wireFileName = "emData/wires_hourglass.dat"; // The wiring file name with directory
+  string wireFileName = "wires_hourglass.dat"; // The wiring file name with directory
 
   char overlapPhiRegion[] = {'X', 'Y', 'Z', 'W', 'Q', 'R', 'S', 'T'}; // Special naming for the TE overlap memories, and outer memories in Disk 1
   char extraPhiRegion[] = {'I', 'J', 'K', 'L'}; // Special naming for the extra memories TEInner L2 and TEOuter L3.
@@ -162,7 +161,6 @@ int main() {
 
     // Start of AllStub file names, excluding the copy number
     allstubName[i] = "/AllStubs_AS_" + layerID;
-    cout << allstubName[i]<< endl; 
     
     // Start of MEStub file names, excluding the copy number, i.e. "n1" as they only have one copy
     string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
@@ -173,7 +171,6 @@ int main() {
     // Start of TEInnerStub file names, excluding the copy number "nX"
     if (maxTEICopies > 1) {
       string teiMemID = (kLAYER != 2) ? "VMSTE_" + layerID : string("VMSTE_L2PHI") + extraPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
-
       findFileNames<nvmTEI>(wireFileName, teiMemID, nameListTEI[i], numCopiesTEI[i]);
     }
 
@@ -181,7 +178,6 @@ int main() {
     // Start of TEInnerStub Overlap file names, excluding the copy number
     if (maxOLCopies > 1) {
       string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + overlapPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
-
       findFileNames<nvmOL>(wireFileName, olMemID, nameListOL[i], numCopiesOL[i]);
     }
 
@@ -242,16 +238,14 @@ int main() {
   for (unsigned int i = 0; i < nPhiRegions; i++) {
     
     string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegionList[i]: "D" + to_string(kDISK) + "PHI" + phiRegionList[i]; // Which layer/disk and phi region
-    string testDataDirectory = "emData/VMR/VMR_" + layerID; // Directory for the test data
+    string testDataDirectory = "VMR/VMR_" + layerID; // Directory for the test data
     
     for (unsigned int j = 0; j < numInputs; j++) {
-      cout << inputNameList[i][j] << endl;
       bool valid = openDataFile(fin_inputstub[i][j], testDataDirectory + "/InputStubs_" + inputNameList[i][j] + fileEnding);
       if (not valid) return -1;
     }
     
     for (unsigned int j = 0; j < maxASCopies; j++) {
-      cout << testDataDirectory + allstubName[i] + "n" + to_string(j+1) + fileEnding << endl;
       bool valid = openDataFile(fout_allstub[i][j], testDataDirectory + allstubName[i] + "n" + to_string(j+1) + fileEnding);
       if (not valid) return -1;
     }

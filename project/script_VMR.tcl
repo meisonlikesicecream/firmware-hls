@@ -8,7 +8,7 @@ open_project -reset vmrouter
 
 # source files
 set CFLAGS {-std=c++11 -I../TrackletAlgorithm}
-set_top VMRouterTop
+set_top SuperVMRouterTop
 add_files ../TrackletAlgorithm/VMRouterTop.cc -cflags "$CFLAGS"
 add_files -tb ../TestBenches/VMRouter_test.cpp -cflags "$CFLAGS"
 
@@ -19,7 +19,8 @@ source settings_hls.tcl
 
 # data files
 add_files -tb ../emData/VMR/tables/
-add_file -tb ../emData/
+add_files -tb ../emData/VMR/
+add_files -tb ../emData/wires_hourglass.dat
 
 csim_design -compiler gcc -mflags "-j8"
 csynth_design
