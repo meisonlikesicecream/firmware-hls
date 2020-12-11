@@ -180,16 +180,23 @@ inline typename AllStub<InType>::ASPHI getPhiCorr(
 // I.e. the position of the first non-zero bit in the mask
 // L1PHIE17 would return 16
 inline ap_uint<nbits_maxvm> firstMemNumber(const ap_uint<static_cast<int>(maxvmbins)> mask) {
-	ap_uint<static_cast<int>(maxvmbins)> i = 0;
-	ap_uint<1> x = mask[i]; // Value of the i:th bit
-
+	//ap_uint<static_cast<int>(maxvmbins)> i = 0;
+	//ap_uint<1> x = mask[i]; // Value of the i:th bit
+	//
 	// Stop counter when we have reached the first non-zero bit
-	while (x == 0 && i < (maxvmbins - 1)) {
-		i++;
-		x = mask[i];
+	// while (x == 0 && i < (maxvmbins - 1)) {
+	// 	i++;
+	// 	x = mask[i];
+	// }
+	//
+	// return firstMem;
+	
+	ap_uint<nbits_maxvm> firstMem = 0;
+	for (unsigned int i = 0; i < maxvmbins; i++ ) {
+		if (mask[i] != 0 && firstMem == 0)  firstMem = i;
 	}
 
-	return i;
+	return firstMem;
 }
 
 // Clears a 2D array of ap_uints by setting everything to 0
@@ -578,28 +585,27 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 // Layer Disk - Specifies the layer or disk number
 // MAXCopies - The maximum number of copies of a memory type
 // NBitsBin number of bits used for the bins in MEMemories
-template<regionType InType, regionType OutType, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies, int NBitsBin, int BendCutTableSize>
+template<regionType InType, regionType OutType, char phiRegion, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies, int NBitsBin, int BendCutTableSize>
 void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[],
 		// rzbitstables, aka binlookup in emulation
 		const int rzbitsInnerTable[], const int rzbitsOverlapTable[], const int rzbitsOuterTable[],
 		// bendcut tables
 		const ap_uint<BendCutTableSize> bendCutInnerTable[], const ap_uint<BendCutTableSize> bendCutOverlapTable[], const ap_uint<BendCutTableSize> bendCutOuterTable[],
 		// Input memories
-		const ap_uint<maskISsize>& maskIS,
 		const InputStubMemory<InType> inputStubs[],
 		const InputStubMemory<DISK2S> inputStubsDisk2S[],
 		// AllStub memory
 		AllStubMemory<OutType> memoriesAS[],
 		// ME memories
-		const ap_uint<maskMEsize>& maskME, VMStubMEMemory<OutType, NBitsBin> memoriesME[],
+		VMStubMEMemory<OutType, NBitsBin> memoriesME[],
 		// Inner TE memories, non-overlap
-		const ap_uint<maskTEIsize>& maskTEI, VMStubTEInnerMemory<OutType> memoriesTEI[][MaxTEICopies],
+		VMStubTEInnerMemory<OutType> memoriesTEI[][MaxTEICopies],
 		// TE Inner memories, overlap
-		const ap_uint<maskOLsize>& maskOL, VMStubTEInnerMemory<BARRELOL> memoriesOL[][MaxOLCopies],
+		VMStubTEInnerMemory<BARRELOL> memoriesOL[][MaxOLCopies],
 		// TE Outer memories
-		const ap_uint<maskTEOsize>& maskTEO, VMStubTEOuterMemory<OutType> memoriesTEO[][MaxTEOCopies]) {
+		VMStubTEOuterMemory<OutType> memoriesTEO[][MaxTEOCopies]) {
 
-#pragma HLS inline
+#pragma HLS inline off
 #pragma HLS array_partition variable=bendCutInnerTable complete dim=1
 #pragma HLS array_partition variable=bendCutOverlapTable complete dim=1
 #pragma HLS array_partition variable=bendCutOuterTable complete dim=1
@@ -612,19 +618,50 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 #pragma HLS array_partition variable=memoriesTEO complete dim=2
 
 
-	// The first memory numbers, the position of the first non-zero bit in the mask
-	// Do not change these to ap_uint as cosim will fail
-	static const int firstME = firstMemNumber(maskME); // ME memory
-	static const int firstTEI = firstMemNumber(maskTEI); // TE Inner memory
-	static const int firstOL = firstMemNumber(maskOL); // TE Overlap memory
-	static const int firstTEO = firstMemNumber(maskTEO); // TE Inner memory
-
 	// Number of memories/VMs for one coarse phi region
+	// constexpr int nvmME = (Layer) ? nvmmelayers[Layer-1] : nvmmedisks[Disk-1]; // ME memories
+	// constexpr int nvmTE = (Layer) ? nvmtelayers[Layer-1] : nvmtedisks[Disk-1]; // TE memories
+	// constexpr int nvmOL = ((Layer == 1) || (Layer == 2)) ? nvmollayers[Layer-1] : 0; // TE Overlap memories
+	
+	// Number of VMs
+	constexpr int nvmStandardTE = (Layer) ? nvmtelayers[Layer-1] : nvmtedisks[Disk-1];
+
 	constexpr int nvmME = (Layer) ? nvmmelayers[Layer-1] : nvmmedisks[Disk-1]; // ME memories
-	constexpr int nvmTE = (Layer) ? nvmtelayers[Layer-1] : nvmtedisks[Disk-1]; // TE memories
-	constexpr int nvmOL = ((Layer == 1) || (Layer == 2)) ? nvmollayers[Layer-1] : 0; // TE Overlap memories
+	constexpr int nvmTEI = (Layer != 2) ? nvmStandardTE : nvmteextralayers[Layer-1]; // TE Inner memories
+	constexpr int nvmOL = (Layer == 1 || Layer == 2) ? nvmollayers[Layer-1] : 1; // TE Inner Overlap memories, can't use 0 when we don't have any OL memories
+	constexpr int nvmTEO = (Layer != 3) ? nvmStandardTE : nvmteextralayers[Layer-1]; // TE Outer memories
 
 	constexpr int nmaxbinsperpage = (Layer) ? nmaxbinsperpagelayer : nmaxbinsperpagedisk; // Number of bins per page in memories
+
+	//////////////////////////////////
+	// Create memory masks
+	
+	constexpr int numInputs = 4;
+	
+	// Masks of which memories that are being used. The first memory is represented by the LSB
+	// and a "1" implies that the specified memory is used for this phi region
+	// Create "nvm" 1s, e.g. "1111", shift the mask until it corresponds to the correct phi region
+	static const ap_uint<maskISsize> maskIS = ((1 << numInputs) - 1); // Input memories
+	static const ap_uint<maskMEsize> maskME = ((1 << nvmME) - 1) << (nvmME * (phiRegion - 'A')); // ME memories
+	static const ap_uint<maskTEIsize> maskTEI =
+		(Layer == 1 || Layer  == 2 || Layer == 3 || Layer == 5 || Disk == 1 || Disk == 3) ?
+				((1 << nvmTEI) - 1) << (nvmTEI * (phiRegion - 'A')) : 0x0; // TE Inner memories, only used for odd layers/disk and layer 2
+	static const ap_uint<maskOLsize> maskOL =
+		((Layer == 1) || (Layer == 2)) ?
+				((1 << nvmOL) - 1) << (nvmOL * (phiRegion - 'A')) : 0x0; // TE Inner Overlap memories, only used for layer 1 and 2
+	static const ap_uint<maskTEOsize> maskTEO =
+		(Layer == 2 || Layer == 3 || Layer == 4 || Layer == 6 || Disk == 1 || Disk == 2 || Disk == 4) ?
+				((1 << nvmTEO) - 1) << (nvmTEO * (phiRegion - 'A')) : 0x0; // TE Outer memories, only for even layers/disks, and layer and disk 1
+
+
+	// The first memory numbers, the position of the first non-zero bit in the mask
+	// Do not change these to ap_uint as cosim will fail
+	// Removed static otherwise it won't synthesise for Super VMR
+	constexpr int firstME = nvmME * (phiRegion - 'A'); //firstMemNumber(maskME); // ME memory
+	constexpr int firstTEI = nvmTEI * (phiRegion - 'A'); //firstMemNumber(maskTEI); // TE Inner memory
+	constexpr int firstOL = nvmOL * (phiRegion - 'A');//firstMemNumber(maskOL); // TE Overlap memory
+	constexpr int firstTEO = nvmTEO * (phiRegion - 'A');//firstMemNumber(maskTEO); // TE Inner memory
+
 
 	// Number of data in each input memory
 	typename InputStubMemory<InType>::NEntryT nInputs[maskISsize]; // Array containing the number of inputs. Last two indices are for DISK2S
@@ -644,21 +681,21 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 	//Create variables that keep track of which memory address to read and write to
 	ap_uint<kNBits_MemAddr> read_addr(0); // Reading of input stubs
 	ap_uint<kNBits_MemAddr> addrCountME[nvmME][nmaxbinsperpage]; // Writing of ME stubs
-	ap_uint<kNBits_MemAddr> addrCountTEI[nvmTE][MaxTEICopies]; // Writing of TE Inner stubs
+	ap_uint<kNBits_MemAddr> addrCountTEI[nvmTEI][MaxTEICopies]; // Writing of TE Inner stubs
 	ap_uint<kNBits_MemAddr> addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
-	ap_uint<kNBits_MemAddr> addrCountTEO[nvmTE][MaxTEOCopies][nmaxbinsperpage]; // Writing of TE Outer stubs
+	ap_uint<kNBits_MemAddr> addrCountTEO[nvmTEO][MaxTEOCopies][nmaxbinsperpage]; // Writing of TE Outer stubs
 
 	if (maskME) {
 		clear2DArray(nvmME, addrCountME);
 	}
 	if (maskTEI) {
-		clear2DArray(nvmTE, addrCountTEI);
+		clear2DArray(nvmTEI, addrCountTEI);
 	}
 	if (maskOL) {
 		clear2DArray(nvmOL, addrCountOL);
 	}
 	if (maskTEO) {
-		clear3DArray(nvmTE, addrCountTEO);
+		clear3DArray(nvmTEO, addrCountTEO);
 	}
 
 

@@ -23,12 +23,13 @@
 #define kLAYER 1 // Which barrel layer number the data is coming from, 0 if not barrel
 #define kDISK 0 // Which disk number the data is coming from, 0 if not disk
 
-constexpr char phiRegion = 'E'; // Which AllStub/PhiRegion
+constexpr unsigned int nPhiRegions = 2;
+constexpr char phiRegionList[nPhiRegions] = {'D', 'E'}; // Which AllStub/PhiRegion
 constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region
 // Note: can't use 0 if we don't have any memories of a certain type. Use 1.
-constexpr int maxASCopies(6); // Allstub memory
+constexpr int maxASCopies(4); // Allstub memory
 constexpr int maxTEICopies(5); // TE Inner memories
 constexpr int maxOLCopies(3); // TE Inner Overlap memories
 constexpr int maxTEOCopies(1); // TE Outer memories
@@ -66,15 +67,15 @@ constexpr regionType outputType = (kLAYER) ? tmpLayerType : DISK;
 // VMRouter Top Function
 // Changed manually
 
-void VMRouterTop(BXType bx,
+void SuperVMRouterTop(BXType bx,
 	// Input memories
-	const InputStubMemory<inputType> inputStub[numInputs],
+	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
 
 	// Output memories
-	AllStubMemory<outputType> allStub[maxASCopies],
-	VMStubMEMemory<outputType, nbitsbin> memoriesME[nvmME],
-	ap_uint<bendCutTableSize> bendCutInnerTable[nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nvmTEI][maxTEICopies],
-	ap_uint<bendCutTableSize> bendCutOverlapTable[nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nvmOL][maxOLCopies]
+	AllStubMemory<outputType> allStub[nPhiRegions][maxASCopies],
+	VMStubMEMemory<outputType, nbitsbin> memoriesME[nPhiRegions][nvmME],
+	ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
+	ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]
 	);
 
 #endif // TrackletAlgorithm_VMRouterTop_h

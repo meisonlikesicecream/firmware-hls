@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const int nEvents = 1;  //number of events to run
+const int nEvents = 100;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -116,162 +116,175 @@ int main() {
   // Get lists of the input/output memory directory and file names
   // I.e. the names of the test vector files
 
-  string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegion : "D" + to_string(kDISK) + "PHI" + phiRegion; // Which layer/disk and phi region
   string fileEnding = (sector < 10) ? "_0" + to_string(sector) + ".dat" :  "_" + to_string(sector) + ".dat"; //All files ends with .dat. "_XX" specifies which sector
 
   // Uses wires_hourglass.dat wiring file
   string wireFileName = "emData/wires_hourglass.dat"; // The wiring file name with directory
-  string testDataDirectory = "emData/VMR/VMR_" + layerID; // Directory for the test data
 
   char overlapPhiRegion[] = {'X', 'Y', 'Z', 'W', 'Q', 'R', 'S', 'T'}; // Special naming for the TE overlap memories, and outer memories in Disk 1
   char extraPhiRegion[] = {'I', 'J', 'K', 'L'}; // Special naming for the extra memories TEInner L2 and TEOuter L3.
 
+
   // Input file names
-  string inputNameList[numInputs];
-  int inputNumCopies[numInputs] = {0}; // Array containing the number of copies of each memory
-
-  string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
-
-  // Get the input file names and check that the wiring file can be opened properly
-  if (not findFileNames<numInputs>(wireFileName, inMemID, inputNameList, inputNumCopies)) return -1;
-
-
+  string inputNameList[nPhiRegions][numInputs];
+  int inputNumCopies[nPhiRegions][numInputs] = {0}; // Array containing the number of copies of each memory
+  
   // Start of AllStub file names, excluding the copy number
-  string allstubName = testDataDirectory + "/AllStubs_AS_" + layerID;
-
-
+  string allstubName[nPhiRegions];
+  
   // Start of MEStub file names, excluding the copy number, i.e. "n1" as they only have one copy
-  string nameListME[nvmME];
-  int numCopiesME[nvmME] = {0}; // Array containing the number of copies of each memory
-
-  string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
-
-  findFileNames<nvmME>(wireFileName, meMemID, nameListME, numCopiesME);
-
-
+  string nameListME[nPhiRegions][nvmME];
+  int numCopiesME[nPhiRegions][nvmME] = {0}; // Array containing the number of copies of each memory
+  
   // Start of TEInnerStub file names, excluding the copy number "nX"
-  string nameListTEI[nvmTEI];
-  int numCopiesTEI[nvmTEI] = {0}; // Array containing the number of copies of each memory
-
-  if (maxTEICopies > 1) {
-    string teiMemID = (kLAYER != 2) ? "VMSTE_" + layerID : string("VMSTE_L2PHI") + extraPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
-
-    findFileNames<nvmTEI>(wireFileName, teiMemID, nameListTEI, numCopiesTEI);
-  }
-
-
+  string nameListTEI[nPhiRegions][nvmTEI];
+  int numCopiesTEI[nPhiRegions][nvmTEI] = {0}; // Array containing the number of copies of each memory
+  
   // Start of TEInnerStub Overlap file names, excluding the copy number
-  string nameListOL[nvmOL];
-  int numCopiesOL[nvmOL] = {0}; // Array containing the number of copies of each memory
-
-  if (maxOLCopies > 1) {
-    string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + overlapPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
-
-    findFileNames<nvmOL>(wireFileName, olMemID, nameListOL, numCopiesOL);
-  }
-
-
+  string nameListOL[nPhiRegions][nvmOL];
+  int numCopiesOL[nPhiRegions][nvmOL] = {0}; // Array containing the number of copies of each memory
+  
   // Start of TEOuterStub file names, excluding the copy number "nX"
-  string nameListTEO[nvmTEO];
-  int numCopiesTEO[nvmTEO] = {0}; // Array containing the number of copies of each memory
+  string nameListTEO[nPhiRegions][nvmTEO];
+  int numCopiesTEO[nPhiRegions][nvmTEO] = {0}; // Array containing the number of copies of each memory
+  
+  for (unsigned int i = 0; i < nPhiRegions; i++) {
+    
+    char phiRegion = phiRegionList[i];
+    string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegion : "D" + to_string(kDISK) + "PHI" + phiRegion; // Which layer/disk and phi region
+    
+    // Input file names
+    string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
 
-  if (maxTEOCopies > 1) {
-    string teoMemID; // TE Outer memory ID for the specified phi region
+    // Get the input file names and check that the wiring file can be opened properly
+    if (not findFileNames<numInputs>(wireFileName, inMemID, inputNameList[i], inputNumCopies[i])) return -1;
+    
 
-    if (kDISK == 1) {
-      teoMemID = string("VMSTE_D1PHI") + overlapPhiRegion[phiRegion - 'A'];
-    }
-    else if (kLAYER == 3) {
-      teoMemID = string("VMSTE_L3PHI") + extraPhiRegion[phiRegion - 'A'];
-    }
-    else {
-      teoMemID = "VMSTE_" + layerID;
+    // Start of AllStub file names, excluding the copy number
+    allstubName[i] = "/AllStubs_AS_" + layerID;
+    cout << allstubName[i]<< endl; 
+    
+    // Start of MEStub file names, excluding the copy number, i.e. "n1" as they only have one copy
+    string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
+
+    findFileNames<nvmME>(wireFileName, meMemID, nameListME[i], numCopiesME[i]);
+
+
+    // Start of TEInnerStub file names, excluding the copy number "nX"
+    if (maxTEICopies > 1) {
+      string teiMemID = (kLAYER != 2) ? "VMSTE_" + layerID : string("VMSTE_L2PHI") + extraPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
+
+      findFileNames<nvmTEI>(wireFileName, teiMemID, nameListTEI[i], numCopiesTEI[i]);
     }
 
-    findFileNames<nvmTEO>(wireFileName, teoMemID, nameListTEO, numCopiesTEO);
+
+    // Start of TEInnerStub Overlap file names, excluding the copy number
+    if (maxOLCopies > 1) {
+      string olMemID = "VMSTE_L" + to_string(kLAYER) + "PHI" + overlapPhiRegion[phiRegion - 'A']; // TE Inner memory ID for the specified phi region
+
+      findFileNames<nvmOL>(wireFileName, olMemID, nameListOL[i], numCopiesOL[i]);
+    }
+
+
+    // Start of TEOuterStub file names, excluding the copy number "nX"
+    if (maxTEOCopies > 1) {
+      string teoMemID; // TE Outer memory ID for the specified phi region
+
+      if (kDISK == 1) {
+        teoMemID = string("VMSTE_D1PHI") + overlapPhiRegion[phiRegion - 'A'];
+      }
+      else if (kLAYER == 3) {
+        teoMemID = string("VMSTE_L3PHI") + extraPhiRegion[phiRegion - 'A'];
+      }
+      else {
+        teoMemID = "VMSTE_" + layerID;
+      }
+
+      findFileNames<nvmTEO>(wireFileName, teoMemID, nameListTEO[i], numCopiesTEO[i]);
+    }
   }
 
 
   ///////////////////////////
   // input memories
-  static InputStubMemory<inputType> inputStub[numInputs];
-  static InputStubMemory<DISK2S> inputStubDisk2S[numInputsDisk2S]; //Only used for Disks
+  static InputStubMemory<inputType> inputStub[nPhiRegions][numInputs];
+  static InputStubMemory<DISK2S> inputStubDisk2S[nPhiRegions][numInputsDisk2S]; //Only used for Disks
 
   // output memories
-  static AllStubMemory<outputType> memoriesAS[maxASCopies];
+  static AllStubMemory<outputType> memoriesAS[nPhiRegions][maxASCopies];
   // ME memories
-  static VMStubMEMemory<outputType, nbitsbin> memoriesME[nvmME];
+  static VMStubMEMemory<outputType, nbitsbin> memoriesME[nPhiRegions][nvmME];
   // TE Inner memories, including copies
-  static VMStubTEInnerMemory<outputType> memoriesTEI[nvmTEI][maxTEICopies];
+  static VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies];
   // TE Inner Overlap memories, including copies
-  static VMStubTEInnerMemory<BARRELOL> memoriesOL[nvmOL][maxOLCopies];
+  static VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies];
   // TE Outer memories
-  static VMStubTEOuterMemory<outputType> memoriesTEO[nvmTEO][maxTEOCopies];
+  static VMStubTEOuterMemory<outputType> memoriesTEO[nPhiRegions][nvmTEO][maxTEOCopies];
 
-
+  
   ///////////////////////////
-  // open input files
+  // open input and ouput files
   cout << "Open files..." << endl;
 
-  ifstream fin_inputstub[numInputs];
-
-  for (unsigned int i = 0; i < numInputs; i++) {
-    bool valid = openDataFile(fin_inputstub[i], testDataDirectory + "/InputStubs_" + inputNameList[i] + fileEnding);
-    if (not valid) return -1;
-  }
-
-
-  ///////////////////////////
-  // open output files
-
+  ifstream fin_inputstub[nPhiRegions][numInputs];
+  
   // AllStub
-  ifstream fout_allstub[maxASCopies];
-
-  for (unsigned int i = 0; i < maxASCopies; i++) {
-    bool valid = openDataFile(fout_allstub[i], allstubName + "n" + to_string(i+1) + fileEnding);
-    if (not valid) return -1;
-  }
-
+  ifstream fout_allstub[nPhiRegions][maxASCopies];
   // ME memories
-  ifstream fout_vmstubme[nvmME];
-
-  for (unsigned int i = 0; i < nvmME; i++) {
-    bool valid =  openDataFile(fout_vmstubme[i], testDataDirectory + "/VMStubs_" + nameListME[i] + "n1" + fileEnding);
-    if (not valid) return -1;
-  }
-
+  ifstream fout_vmstubme[nPhiRegions][nvmME];
   // TE Inner
-	ifstream fout_vmstubtei[nvmTEI][maxTEICopies];
-
-  if (maxTEICopies > 1) {
-    for (unsigned int i = 0; i < nvmTEI; i++) {
-      for (unsigned int j = 0; j < numCopiesTEI[i]; j++) {
-        bool valid = openDataFile(fout_vmstubtei[i][j], testDataDirectory + "/VMStubs_" + nameListTEI[i] + "n" + to_string(j+1) + fileEnding);
-        if (not valid) return -1;
-      }
-    }
-  }
-
+  ifstream fout_vmstubtei[nPhiRegions][nvmTEI][maxTEICopies];
   // TE Inner Overlap
-	ifstream fout_vmstubteol[nvmOL][maxOLCopies];
+  ifstream fout_vmstubteol[nPhiRegions][nvmOL][maxOLCopies];
+  // TE Outer
+  ifstream fout_vmstubteo[nPhiRegions][nvmTEO][maxTEOCopies];
+  
+  for (unsigned int i = 0; i < nPhiRegions; i++) {
+    
+    string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegionList[i]: "D" + to_string(kDISK) + "PHI" + phiRegionList[i]; // Which layer/disk and phi region
+    string testDataDirectory = "emData/VMR/VMR_" + layerID; // Directory for the test data
+    
+    for (unsigned int j = 0; j < numInputs; j++) {
+      cout << inputNameList[i][j] << endl;
+      bool valid = openDataFile(fin_inputstub[i][j], testDataDirectory + "/InputStubs_" + inputNameList[i][j] + fileEnding);
+      if (not valid) return -1;
+    }
+    
+    for (unsigned int j = 0; j < maxASCopies; j++) {
+      cout << testDataDirectory + allstubName[i] + "n" + to_string(j+1) + fileEnding << endl;
+      bool valid = openDataFile(fout_allstub[i][j], testDataDirectory + allstubName[i] + "n" + to_string(j+1) + fileEnding);
+      if (not valid) return -1;
+    }
 
-  if (maxOLCopies > 1) {
-    for (unsigned int i = 0; i < nvmOL; i++) {
-      for (unsigned int j = 0; j < numCopiesOL[i]; j++) {
-        bool valid = openDataFile(fout_vmstubteol[i][j], testDataDirectory + "/VMStubs_" + nameListOL[i] + "n" + to_string(j+1) + fileEnding);
-        if (not valid) return -1;
+    for (unsigned int j = 0; j < nvmME; j++) {
+      bool valid =  openDataFile(fout_vmstubme[i][j], testDataDirectory + "/VMStubs_" + nameListME[i][j] + "n1" + fileEnding);
+      if (not valid) return -1;
+    }
+
+    if (maxTEICopies > 1) {
+      for (unsigned int j = 0; j < nvmTEI; j++) {
+        for (unsigned int k = 0; k < numCopiesTEI[i][j]; k++) {
+          bool valid = openDataFile(fout_vmstubtei[i][j][k], testDataDirectory + "/VMStubs_" + nameListTEI[i][j] + "n" + to_string(k+1) + fileEnding);
+          if (not valid) return -1;
+        }
       }
     }
-  }
 
-  // TE Outer
-  ifstream fout_vmstubteo[nvmTEO][maxTEOCopies];
+    if (maxOLCopies > 1) {
+      for (unsigned int j = 0; j < nvmOL; j++) {
+        for (unsigned int k = 0; k < numCopiesOL[i][j]; k++) {
+          bool valid = openDataFile(fout_vmstubteol[i][j][k], testDataDirectory + "/VMStubs_" + nameListOL[i][j] + "n" + to_string(k+1) + fileEnding);
+          if (not valid) return -1;
+        }
+      }
+    }
 
-  if (maxTEOCopies > 1) {
-    for (unsigned int i = 0; i < nvmTEO; i++) {
-      for (unsigned int j = 0; j < numCopiesTEO[i]; j++) {
-        bool valid = openDataFile(fout_vmstubteo[i][j], testDataDirectory + "/VMStubs_" + nameListTEO[i] + "n" + to_string(j+1) + fileEnding);
-        if (not valid) return -1;
+    if (maxTEOCopies > 1) {
+      for (unsigned int j = 0; j < nvmTEO; j++) {
+        for (unsigned int k = 0; k < numCopiesTEO[i][j]; k++) {
+          bool valid = openDataFile(fout_vmstubteo[i][j][k], testDataDirectory + "/VMStubs_" + nameListTEO[i][j] + "n" + to_string(k+1) + fileEnding);
+          if (not valid) return -1;
+        }
       }
     }
   }
@@ -279,14 +292,15 @@ int main() {
   //////////////////////////////////
   // Open LUTs
 
-  ap_uint<bendCutTableSize> bendCutInnerTable[nvmTEI*maxTEICopies];
-  ap_uint<bendCutTableSize> bendCutOverlapTable[nvmOL*maxOLCopies];
-  ap_uint<bendCutTableSize> bendCutOuterTable[nvmTEO*maxTEOCopies];
-
-  if (maxTEICopies > 1) createBendCutTable<nvmTEI*maxTEICopies, nvmTEI>(bendCutInnerTable, nameListTEI, numCopiesTEI);
-  if (maxOLCopies > 1) createBendCutTable<nvmOL*maxOLCopies, nvmOL>(bendCutOverlapTable, nameListOL, numCopiesOL);
-  if (maxTEOCopies > 1) createBendCutTable<nvmTEO*maxTEOCopies, nvmTEO>(bendCutOuterTable, nameListTEO, numCopiesTEO);
-
+  ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies];
+  ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies];
+  ap_uint<bendCutTableSize> bendCutOuterTable[nPhiRegions][nvmTEO*maxTEOCopies];
+  
+  for (unsigned int i = 0; i < nPhiRegions; i++) {
+    if (maxTEICopies > 1) createBendCutTable<nvmTEI*maxTEICopies, nvmTEI>(bendCutInnerTable[i], nameListTEI[i], numCopiesTEI[i]);
+    if (maxOLCopies > 1) createBendCutTable<nvmOL*maxOLCopies, nvmOL>(bendCutOverlapTable[i], nameListOL[i], numCopiesOL[i]);
+    if (maxTEOCopies > 1) createBendCutTable<nvmTEO*maxTEOCopies, nvmTEO>(bendCutOuterTable[i], nameListTEO[i], numCopiesTEO[i]);
+  }
 
   ///////////////////////////
   // loop over events
@@ -299,40 +313,44 @@ int main() {
     cout << "Event: " << dec << ievt << endl;
 
     // clear output memories
-    for (int i=0; i<maxASCopies; ++i) {
-      memoriesAS[i].clear();
-    }
-    for (int i=0; i<nvmME; ++i) {
-      memoriesME[i].clear();
-    }
-    for (int i=0; i<nvmTEI; ++i) {
-      for (int j=0; j<maxTEICopies; j++) {
-        memoriesTEI[i][j].clear();
+    for (unsigned int i = 0; i < nPhiRegions; i++) {
+      for (int j=0; j<maxASCopies; ++j) {
+        memoriesAS[i][j].clear();
       }
-    }
-    for (int i=0; i<nvmOL; ++i) {
-      for (int j=0; j<maxOLCopies; j++) {
-        memoriesOL[i][j].clear();
+      for (int j=0; j<nvmME; ++j) {
+        memoriesME[i][j].clear();
       }
-    }
-    for (int i=0; i<nvmTEO; ++i) {
-      for (int j=0; j<maxTEOCopies; j++) {
-        memoriesTEO[i][j].clear();
+      for (int j=0; j<nvmTEI; ++j) {
+        for (int k=0; k<maxTEICopies; k++) {
+          memoriesTEI[i][j][k].clear();
+        }
+      }
+      for (int j=0; j<nvmOL; ++j) {
+        for (int k=0; k<maxOLCopies; k++) {
+          memoriesOL[i][j][k].clear();
+        }
+      }
+      for (int j=0; j<nvmTEO; ++j) {
+        for (int k=0; k<maxTEOCopies; k++) {
+          memoriesTEO[i][j][k].clear();
+        }
       }
     }
 
     int num2S = 0; // Keeps track of how many DISK 2S modules we have written to
 
     // read event and write to memories
-    for (unsigned int i = 0; i < numInputs; i++) {
-      if (kLAYER) {
-        writeMemFromFile<InputStubMemory<inputType>>(inputStub[i], fin_inputstub[i], ievt);
-      } else {
-        if (i == 0 || i == 3) {
-          writeMemFromFile<InputStubMemory<DISK2S>>(inputStubDisk2S[num2S], fin_inputstub[i], ievt);
-          num2S++;
+    for (unsigned int i = 0; i < nPhiRegions; i++) {
+      for (unsigned int j = 0; j < numInputs; j++) {
+        if (kLAYER) {
+          writeMemFromFile<InputStubMemory<inputType>>(inputStub[i][j], fin_inputstub[i][j], ievt);
         } else {
-          writeMemFromFile<InputStubMemory<inputType>>(inputStub[i - num2S], fin_inputstub[i], ievt);
+          if (i == 0 || i == 3) {
+            writeMemFromFile<InputStubMemory<DISK2S>>(inputStubDisk2S[i][num2S], fin_inputstub[i][j], ievt);
+            num2S++;
+          } else {
+            writeMemFromFile<InputStubMemory<inputType>>(inputStub[i][j - num2S], fin_inputstub[i][j], ievt);
+          }
         }
       }
     }
@@ -341,7 +359,7 @@ int main() {
     BXType bx = ievt;
 
     // Unit Under Test
-    VMRouterTop(bx, inputStub
+    SuperVMRouterTop(bx, inputStub
 #if kDISK > 0
         , inputStubDisk2S
 #endif
@@ -361,40 +379,42 @@ int main() {
     // add 1 to the error count per stub that is incorrect
 
     bool truncation = false;
-
-    // AllStub
-    for (unsigned int i = 0; i < maxASCopies; i++) {
-      err += compareMemWithFile<AllStubMemory<outputType>>(memoriesAS[i], fout_allstub[i], ievt, "AllStub", truncation);
-    }
-
-    // ME Memories
-    for (unsigned int i = 0; i < nvmME; i++) {
-      err += compareBinnedMemWithFile<VMStubMEMemory<outputType, nbitsbin>>(memoriesME[i], fout_vmstubme[i], ievt, "VMStubME" + to_string(i), truncation);
-    }
-
-    // TE Inner Memories
-    if (maxTEICopies > 1) {
-      for (unsigned int i = 0; i < nvmTEI; i++) {
-        for (unsigned int j = 0; j < numCopiesTEI[i]; j++) {
-          err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(memoriesTEI[i][j], fout_vmstubtei[i][j], ievt, "VMStubTEInner" + to_string(i) + "n" + to_string(j+1), truncation);
+    
+    for (unsigned int i = 0; i < nPhiRegions; i++) {
+      // AllStub
+      for (unsigned int j = 0; j < maxASCopies; j++) {
+        err += compareMemWithFile<AllStubMemory<outputType>>(memoriesAS[i][j], fout_allstub[i][j], ievt, "AllStub", truncation);
+      }
+      
+      // ME Memories
+      for (unsigned int j = 0; j < nvmME; j++) {
+        err += compareBinnedMemWithFile<VMStubMEMemory<outputType, nbitsbin>>(memoriesME[i][j], fout_vmstubme[i][j], ievt, "VMStubME" + to_string(j), truncation);
+      }
+      
+      // TE Inner Memories
+      if (maxTEICopies > 1) {
+        for (unsigned int j = 0; j < nvmTEI; j++) {
+          for (unsigned int k = 0; k < numCopiesTEI[i][j]; k++) {
+            err += compareMemWithFile<VMStubTEInnerMemory<outputType>>(memoriesTEI[i][j][k], fout_vmstubtei[i][j][k], ievt, "VMStubTEInner" + to_string(j) + "n" + to_string(k+1), truncation);
+          }
         }
       }
-    }
-
-    // TE Inner Overlap memories
-    if (maxOLCopies > 1) {
-      for (unsigned int i = 0; i < nvmOL; i++) {
-        for (unsigned int j = 0; j < numCopiesOL[i]; j++) {
-          err += compareMemWithFile<VMStubTEInnerMemory<BARRELOL>>(memoriesOL[i][j], fout_vmstubteol[i][j], ievt, "VMStubTEOverlap" + to_string(i) + "n" + to_string(j+1), truncation);
+      
+      // TE Inner Overlap memories
+      if (maxOLCopies > 1) {
+        for (unsigned int j = 0; j < nvmOL; j++) {
+          for (unsigned int k = 0; k < numCopiesOL[i][j]; k++) {
+            err += compareMemWithFile<VMStubTEInnerMemory<BARRELOL>>(memoriesOL[i][j][k], fout_vmstubteol[i][j][k], ievt, "VMStubTEOverlap" + to_string(j) + "n" + to_string(k+1), truncation);
+          }
         }
       }
-    }
-
-    // TE Outer memories
-    if (maxTEOCopies > 1) {
-      for (unsigned int i = 0; i < nvmTEO; i++) {
-        for (unsigned int j = 0; j < numCopiesTEO[i]; j++) {
-          err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(memoriesTEO[i][j], fout_vmstubteo[i][j], ievt, "VMStubTEOuter" + to_string(i) + "n" + to_string(j+1), truncation);
+      
+      // TE Outer memories
+      if (maxTEOCopies > 1) {
+        for (unsigned int j = 0; j < nvmTEO; j++) {
+          for (unsigned int k = 0; k < numCopiesTEO[i][j]; k++) {
+            err += compareBinnedMemWithFile<VMStubTEOuterMemory<outputType>>(memoriesTEO[i][j][k], fout_vmstubteo[i][j][k], ievt, "VMStubTEOuter" + to_string(j) + "n" + to_string(k+1), truncation);
+          }
         }
       }
     }
