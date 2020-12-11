@@ -1,6 +1,6 @@
 #include "VMRouterTop.h"
 
-// VMRouter Top Function for layer 1, AllStub region E
+// VMRouter Top Function for layer 1
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
 
 // NOTE: to run a different phi region, change the following
@@ -13,7 +13,9 @@
 //          - the top function and memory directory in script_VMR.tcl (if file name is changed)
 //          - add the phi region in emData/download.sh, make sure to also run clean
 
-template<int N, int STOP>
+
+// VMRouter loop function which calls the VMR and itself but with template parameter N-1
+template<int N>
 void VMRouterLoop(BXType bx,
 	// Input memories
 	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
@@ -63,7 +65,7 @@ void VMRouterLoop(BXType bx,
 
 	constexpr char phiRegion = phiRegionList[N];
 
-	VMRouterLoop<N-1, STOP>(bx,
+	VMRouterLoop<N-1>(bx,
 		// Input memories
 		inputStub,
 		// Output memories
@@ -95,8 +97,9 @@ void VMRouterLoop(BXType bx,
 
 }
 
+// The last VMRouter loop function which only calls the VMR
 template<>
-void VMRouterLoop<0, 0>(BXType bx,
+void VMRouterLoop<0>(BXType bx,
 	// Input memories
 	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
 
@@ -169,7 +172,8 @@ void VMRouterLoop<0, 0>(BXType bx,
 			);
 	}
 
-
+// Super VMR Top function
+// Calls VMRouterLoop recursively
 void SuperVMRouterTop(BXType bx,
 	// Input memories
 	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
@@ -190,7 +194,7 @@ void SuperVMRouterTop(BXType bx,
 	#pragma HLS array_partition variable=bendCutOverlapTable complete
 	#pragma HLS array_partition variable=memoriesOL complete
 	
-	VMRouterLoop<nPhiRegions-1, 0>(bx,
+	VMRouterLoop<nPhiRegions-1>(bx,
 		// Input memories
 		inputStub,
 		// Output memories

@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const int nEvents = 100;  //number of events to run
+const int nEvents = 1;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -70,7 +70,7 @@ ap_uint<bendCutTableSize> readBendCutTable(string tableName) {
 
   ifstream file;
   openDataFile(file, tableName);
-
+  
   ap_uint<bendCutTableSize> table;
   int i = 0;
 
@@ -119,7 +119,7 @@ int main() {
 
   // Uses wires_hourglass.dat wiring file
   string wireFileName = "wires_hourglass.dat"; // The wiring file name with directory
-
+  
   char overlapPhiRegion[] = {'X', 'Y', 'Z', 'W', 'Q', 'R', 'S', 'T'}; // Special naming for the TE overlap memories, and outer memories in Disk 1
   char extraPhiRegion[] = {'I', 'J', 'K', 'L'}; // Special naming for the extra memories TEInner L2 and TEOuter L3.
 
@@ -151,20 +151,19 @@ int main() {
     
     char phiRegion = phiRegionList[i];
     string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegion : "D" + to_string(kDISK) + "PHI" + phiRegion; // Which layer/disk and phi region
-    
+
     // Input file names
     string inMemID = "IL_" + layerID; // Input memory ID for the specified phi region
-
     // Get the input file names and check that the wiring file can be opened properly
     if (not findFileNames<numInputs>(wireFileName, inMemID, inputNameList[i], inputNumCopies[i])) return -1;
     
 
     // Start of AllStub file names, excluding the copy number
-    allstubName[i] = "/AllStubs_AS_" + layerID;
-    
+    allstubName[i] = "AS_" + layerID;
+
+
     // Start of MEStub file names, excluding the copy number, i.e. "n1" as they only have one copy
     string meMemID  =  "VMSME_" + layerID; // ME memory ID for the specified phi region
-
     findFileNames<nvmME>(wireFileName, meMemID, nameListME[i], numCopiesME[i]);
 
 
@@ -238,23 +237,26 @@ int main() {
   for (unsigned int i = 0; i < nPhiRegions; i++) {
     
     string layerID = (kLAYER) ? "L" + to_string(kLAYER) + "PHI" + phiRegionList[i]: "D" + to_string(kDISK) + "PHI" + phiRegionList[i]; // Which layer/disk and phi region
-    string testDataDirectory = "VMR/VMR_" + layerID; // Directory for the test data
+    string testDataDirectory = "VMR/VMR_" + layerID;
     
     for (unsigned int j = 0; j < numInputs; j++) {
       bool valid = openDataFile(fin_inputstub[i][j], testDataDirectory + "/InputStubs_" + inputNameList[i][j] + fileEnding);
       if (not valid) return -1;
     }
     
+    // AllStub
     for (unsigned int j = 0; j < maxASCopies; j++) {
-      bool valid = openDataFile(fout_allstub[i][j], testDataDirectory + allstubName[i] + "n" + to_string(j+1) + fileEnding);
+      bool valid = openDataFile(fout_allstub[i][j], testDataDirectory + "/AllStubs_" + allstubName[i] + "n" + to_string(j+1) + fileEnding);
       if (not valid) return -1;
     }
-
+    
+    // ME memories
     for (unsigned int j = 0; j < nvmME; j++) {
       bool valid =  openDataFile(fout_vmstubme[i][j], testDataDirectory + "/VMStubs_" + nameListME[i][j] + "n1" + fileEnding);
       if (not valid) return -1;
     }
-
+    
+    // TE Inner
     if (maxTEICopies > 1) {
       for (unsigned int j = 0; j < nvmTEI; j++) {
         for (unsigned int k = 0; k < numCopiesTEI[i][j]; k++) {
@@ -263,7 +265,8 @@ int main() {
         }
       }
     }
-
+    
+    // TE Inner Overlap
     if (maxOLCopies > 1) {
       for (unsigned int j = 0; j < nvmOL; j++) {
         for (unsigned int k = 0; k < numCopiesOL[i][j]; k++) {
@@ -272,7 +275,8 @@ int main() {
         }
       }
     }
-
+    
+    // TE Outer
     if (maxTEOCopies > 1) {
       for (unsigned int j = 0; j < nvmTEO; j++) {
         for (unsigned int k = 0; k < numCopiesTEO[i][j]; k++) {

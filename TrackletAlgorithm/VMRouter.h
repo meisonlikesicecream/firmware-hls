@@ -178,29 +178,6 @@ inline typename AllStub<InType>::ASPHI getPhiCorr(
 	return phiCorr;
 }
 
-// Returns the number of the first ME/TE memory for the current VMRouter
-// I.e. the position of the first non-zero bit in the mask
-// L1PHIE17 would return 16
-inline ap_uint<nbits_maxvm> firstMemNumber(const ap_uint<static_cast<int>(maxvmbins)> mask) {
-	//ap_uint<static_cast<int>(maxvmbins)> i = 0;
-	//ap_uint<1> x = mask[i]; // Value of the i:th bit
-	//
-	// Stop counter when we have reached the first non-zero bit
-	// while (x == 0 && i < (maxvmbins - 1)) {
-	// 	i++;
-	// 	x = mask[i];
-	// }
-	//
-	// return firstMem;
-	
-	ap_uint<nbits_maxvm> firstMem = 0;
-	for (unsigned int i = 0; i < maxvmbins; i++ ) {
-		if (mask[i] != 0 && firstMem == 0)  firstMem = i;
-	}
-
-	return firstMem;
-}
-
 // Clears a 2D array of ap_uints by setting everything to 0
 // Don't put the first dimension in template parameter as synthesis
 // will crash if you're not using OL memories (i.e. they are set to 0)
@@ -619,13 +596,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 #pragma HLS array_partition variable=memoriesOL complete dim=2
 #pragma HLS array_partition variable=memoriesTEO complete dim=2
 
-
 	// Number of memories/VMs for one coarse phi region
-	// constexpr int nvmME = (Layer) ? nvmmelayers[Layer-1] : nvmmedisks[Disk-1]; // ME memories
-	// constexpr int nvmTE = (Layer) ? nvmtelayers[Layer-1] : nvmtedisks[Disk-1]; // TE memories
-	// constexpr int nvmOL = ((Layer == 1) || (Layer == 2)) ? nvmollayers[Layer-1] : 0; // TE Overlap memories
-	
-	// Number of VMs
 	constexpr int nvmStandardTE = (Layer) ? nvmtelayers[Layer-1] : nvmtedisks[Disk-1];
 
 	constexpr int nvmME = (Layer) ? nvmmelayers[Layer-1] : nvmmedisks[Disk-1]; // ME memories
@@ -657,13 +628,11 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 
 
 	// The first memory numbers, the position of the first non-zero bit in the mask
-	// Do not change these to ap_uint as cosim will fail
 	// Removed static otherwise it won't synthesise for Super VMR
 	constexpr int firstME = nvmME * (phiRegion - 'A'); //firstMemNumber(maskME); // ME memory
 	constexpr int firstTEI = nvmTEI * (phiRegion - 'A'); //firstMemNumber(maskTEI); // TE Inner memory
 	constexpr int firstOL = nvmOL * (phiRegion - 'A');//firstMemNumber(maskOL); // TE Overlap memory
 	constexpr int firstTEO = nvmTEO * (phiRegion - 'A');//firstMemNumber(maskTEO); // TE Inner memory
-
 
 	// Number of data in each input memory
 	typename InputStubMemory<InType>::NEntryT nInputs[maskISsize]; // Array containing the number of inputs. Last two indices are for DISK2S
@@ -686,6 +655,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 	ap_uint<kNBits_MemAddr> addrCountTEI[nvmTEI][MaxTEICopies]; // Writing of TE Inner stubs
 	ap_uint<kNBits_MemAddr> addrCountOL[nvmOL][MaxOLCopies]; // Writing of TE Overlap stubs
 	ap_uint<kNBits_MemAddr-NBitsBinTEO+1> addrCountTEO[nvmTEO][MaxTEOCopies][nmaxbinsperpage]; // Writing of TE Outer stubs
+
 
 	if (maskME) {
 		clear2DArray(nvmME, addrCountME);
