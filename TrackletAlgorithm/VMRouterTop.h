@@ -86,14 +86,19 @@ constexpr int bendCutTableSize(8); // Number of entries in each bendcut table. C
 // Changed manually
 
 void SuperVMRouterTop(BXType bx,
+	// Lookup tables
+	const ap_uint<6> fineBinTable[nPhiRegions][1<<11],
+	const ap_int<10> phiCorrTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsInnerTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsOverlapTable[nPhiRegions][1<<11],
 	// Input memories
 	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
 
 	// Output memories
-	AllStubMemory<outputType> allStub[nPhiRegions][maxASCopies],
+	AllStubMemory<outputType> memoriesAS[nPhiRegions][maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[nPhiRegions][nvmME],
-	ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
-	ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]
+	const ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
+	const ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]
 	);
 
 #endif // TrackletAlgorithm_VMRouterTop_h

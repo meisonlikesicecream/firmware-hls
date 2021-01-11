@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const int nEvents = 1;  //number of events to run
+const int nEvents = 100;  //number of events to run
 
 // VMRouter Test that works for all regions
 // Sort stubs into smaller regions in phi, i.e. Virtual Modules (VMs).
@@ -64,6 +64,25 @@ bool findFileNames(string wireFileName, string memID, string nameList[arraySize]
   }
   return true;
 }
+
+// Read lookup table and returns it in an array
+template<typename apInt>
+void readTable(apInt table[], string tableName) {
+
+  ifstream file;
+  openDataFile(file, tableName);
+  
+  int i = 0;
+
+  for (string inputLine; getline(file, inputLine); ) {
+    if ((inputLine != "{") && (inputLine != "};")) {
+      int value = stoi(inputLine.substr(0, inputLine.find(','))); // Convert char to int
+      table[i] = value;
+      i++;
+    }
+  }
+}
+
 
 // Reads bendcut table and returns it as an ap_uint
 ap_uint<bendCutTableSize> readBendCutTable(string tableName) {
@@ -294,11 +313,38 @@ int main() {
   ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies];
   ap_uint<bendCutTableSize> bendCutOuterTable[nPhiRegions][nvmTEO*maxTEOCopies];
   
+  // LUT with the corrected r/z. It is corrected for the average r (z) of the barrel (disk).
+  // Includes both coarse r/z position (bin), and finer region each r/z bin is divided into.
+  // Indexed using r and z position bits
+  ap_uint<6> fineBinTables[nPhiRegions][1<<11];
+
+  // LUT with phi corrections to project the stub to the average radius in a layer.
+  // Only used by layers.
+  // Indexed using phi and bend bits
+  ap_int<10> phiCorrTables[nPhiRegions][1<<11]; 
+  
+  // LUT with the Z/R bits for TE memories
+  // Contain information about where in z to look for valid stub pairs
+  // Indexed using z and r position bits
+
+  ap_int<11> rzBitsInnerTable[nPhiRegions][1<<11];
+
+  ap_int<11> rzBitsOverlapTable[nPhiRegions][1<<11];
+
+  // 	static const int rzBitsOuterTable[] = // 11 bits used for LUT
+  // #include "../emData/VMR/tables/VMTableOuterXX.tab"
+
   for (unsigned int i = 0; i < nPhiRegions; i++) {
     if (maxTEICopies > 1) createBendCutTable<nvmTEI*maxTEICopies, nvmTEI>(bendCutInnerTable[i], nameListTEI[i], numCopiesTEI[i]);
     if (maxOLCopies > 1) createBendCutTable<nvmOL*maxOLCopies, nvmOL>(bendCutOverlapTable[i], nameListOL[i], numCopiesOL[i]);
     if (maxTEOCopies > 1) createBendCutTable<nvmTEO*maxTEOCopies, nvmTEO>(bendCutOuterTable[i], nameListTEO[i], numCopiesTEO[i]);
+    
+    readTable(fineBinTables[i], "tables/VMR_L1PHIE_finebin.tab");
+    readTable(phiCorrTables[i], "tables/VMPhiCorrL" + to_string(kLAYER) + ".tab");
+    readTable(rzBitsInnerTable[i], "tables/VMTableInnerL1L2.tab");
+    readTable(rzBitsOverlapTable[i], "tables/VMTableInnerL1D1.tab");
   }
+
 
   ///////////////////////////
   // loop over events
@@ -357,7 +403,14 @@ int main() {
     BXType bx = ievt;
 
     // Unit Under Test
-    SuperVMRouterTop(bx, inputStub
+    SuperVMRouterTop(bx,
+      // Lookup tables
+      fineBinTables,
+      phiCorrTables,
+      rzBitsInnerTable,
+      rzBitsOverlapTable,
+      // Memories
+      inputStub
 #if kDISK > 0
         , inputStubDisk2S
 #endif

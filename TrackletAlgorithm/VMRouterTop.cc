@@ -17,45 +17,23 @@
 // VMRouter loop function which calls the VMR and itself but with template parameter N-1
 template<int N>
 void VMRouterLoop(BXType bx,
+	// Lookup tables
+	const ap_uint<6> fineBinTable[nPhiRegions][1<<11],
+	const ap_int<10> phiCorrTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsInnerTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsOverlapTable[nPhiRegions][1<<11],
+	const ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies],
+	const ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies],
+	
 	// Input memories
 	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
 
 	// Output memories
 	AllStubMemory<outputType> memoriesAS[nPhiRegions][maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[nPhiRegions][nvmME],
-	ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
-	ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]) {
-		
-		///////////////////////////
-		// Open Lookup tables
-		// NOTE: needs to be changed manually if run for a different phi region
+	VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
+	VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]) {
 
-		// LUT with the corrected r/z. It is corrected for the average r (z) of the barrel (disk).
-		// Includes both coarse r/z position (bin), and finer region each r/z bin is divided into.
-		// Indexed using r and z position bits
-		static const int fineBinTable[] =
-	#include "../emData/VMR/tables/VMR_L1PHIE_finebin.tab"
-
-
-		// LUT with phi corrections to project the stub to the average radius in a layer.
-		// Only used by layers.
-		// Indexed using phi and bend bits
-		static const int phiCorrTable[] =
-	#include "../emData/VMR/tables/VMPhiCorrL1.tab"
-
-
-		// LUT with the Z/R bits for TE memories
-		// Contain information about where in z to look for valid stub pairs
-		// Indexed using z and r position bits
-
-		static const int rzBitsInnerTable[] =
-	#include "../emData/VMR/tables/VMTableInnerL1L2.tab" // 11 bits used for LUT
-
-		static const int rzBitsOverlapTable[] = // 11 bits used for LUT
-	#include "../emData/VMR/tables/VMTableInnerL1D1.tab"
-
-	// 	static const int rzBitsOuterTable[] = // 11 bits used for LUT
-	// #include "../emData/VMR/tables/VMTableOuterXX.tab"
 
 	// Takes 2 clock cycles before on gets data, used at high frequencies
 	//#pragma HLS resource variable=inputStub[0].get_mem() latency=2
@@ -66,20 +44,27 @@ void VMRouterLoop(BXType bx,
 	constexpr char phiRegion = phiRegionList[N];
 
 	VMRouterLoop<N-1>(bx,
+		// Lookup tables
+		fineBinTable,
+		phiCorrTable,
+		rzBitsInnerTable,
+		rzBitsOverlapTable,
+		bendCutInnerTable,
+		bendCutOverlapTable,
 		// Input memories
 		inputStub,
 		// Output memories
 		memoriesAS,
 		memoriesME,
-		bendCutInnerTable, memoriesTEI,
-		bendCutOverlapTable, memoriesOL);
+		memoriesTEI,
+		memoriesOL);
 
 		/////////////////////////
 		// Main function
 
 		VMRouter<inputType, outputType, phiRegion, kLAYER, kDISK,  maxASCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin, bendCutTableSize>
-		(bx, fineBinTable, phiCorrTable,
-			rzBitsInnerTable, rzBitsOverlapTable, nullptr,
+		(bx, fineBinTable[N], phiCorrTable[N],
+			rzBitsInnerTable[N], rzBitsOverlapTable[N], nullptr,
 			bendCutInnerTable[N], bendCutOverlapTable[N], nullptr,
 			// Input memories
 			inputStub[N], nullptr,
@@ -100,45 +85,22 @@ void VMRouterLoop(BXType bx,
 // The last VMRouter loop function which only calls the VMR
 template<>
 void VMRouterLoop<0>(BXType bx,
+	// Lookup tables
+	const ap_uint<6> fineBinTable[nPhiRegions][1<<11],
+	const ap_int<10> phiCorrTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsInnerTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsOverlapTable[nPhiRegions][1<<11],
+	const ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies],
+	const ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies],
+	
 	// Input memories
 	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
 
 	// Output memories
 	AllStubMemory<outputType> memoriesAS[nPhiRegions][maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[nPhiRegions][nvmME],
-	ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
-	ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]) {
-		
-		///////////////////////////
-		// Open Lookup tables
-		// NOTE: needs to be changed manually if run for a different phi region
-
-		// LUT with the corrected r/z. It is corrected for the average r (z) of the barrel (disk).
-		// Includes both coarse r/z position (bin), and finer region each r/z bin is divided into.
-		// Indexed using r and z position bits
-		static const int fineBinTable[] =
-	#include "../emData/VMR/tables/VMR_L1PHIE_finebin.tab"
-
-
-		// LUT with phi corrections to project the stub to the average radius in a layer.
-		// Only used by layers.
-		// Indexed using phi and bend bits
-		static const int phiCorrTable[] =
-	#include "../emData/VMR/tables/VMPhiCorrL1.tab"
-
-
-		// LUT with the Z/R bits for TE memories
-		// Contain information about where in z to look for valid stub pairs
-		// Indexed using z and r position bits
-
-		static const int rzBitsInnerTable[] =
-	#include "../emData/VMR/tables/VMTableInnerL1L2.tab" // 11 bits used for LUT
-
-		static const int rzBitsOverlapTable[] = // 11 bits used for LUT
-	#include "../emData/VMR/tables/VMTableInnerL1D1.tab"
-
-	// 	static const int rzBitsOuterTable[] = // 11 bits used for LUT
-	// #include "../emData/VMR/tables/VMTableOuterXX.tab"
+	VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
+	VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]) {
 
 	// Takes 2 clock cycles before on gets data, used at high frequencies
 	//#pragma HLS resource variable=inputStub[0].get_mem() latency=2
@@ -154,8 +116,8 @@ void VMRouterLoop<0>(BXType bx,
 		// Main function
 
 		VMRouter<inputType, outputType, phiRegion, kLAYER, kDISK,  maxASCopies, maxTEICopies, maxOLCopies, maxTEOCopies, nbitsbin, bendCutTableSize>
-		(bx, fineBinTable, phiCorrTable,
-			rzBitsInnerTable, rzBitsOverlapTable, nullptr,
+		(bx, fineBinTable[0], phiCorrTable[0],
+			rzBitsInnerTable[0], rzBitsOverlapTable[0], nullptr,
 			bendCutInnerTable[0], bendCutOverlapTable[0], nullptr,
 			// Input memories
 			inputStub[0], nullptr,
@@ -175,14 +137,20 @@ void VMRouterLoop<0>(BXType bx,
 // Super VMR Top function
 // Calls VMRouterLoop recursively
 void SuperVMRouterTop(BXType bx,
+	// Lookup tables
+	const ap_uint<6> fineBinTable[nPhiRegions][1<<11],
+	const ap_int<10> phiCorrTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsInnerTable[nPhiRegions][1<<11],
+	const ap_int<11> rzBitsOverlapTable[nPhiRegions][1<<11],
+	
 	// Input memories
 	const InputStubMemory<inputType> inputStub[nPhiRegions][numInputs],
 
 	// Output memories
 	AllStubMemory<outputType> memoriesAS[nPhiRegions][maxASCopies],
 	VMStubMEMemory<outputType, nbitsbin> memoriesME[nPhiRegions][nvmME],
-	ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
-	ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies])
+	const ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
+	const ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies])
  {
 
 	#pragma HLS inline region recursive
@@ -193,14 +161,26 @@ void SuperVMRouterTop(BXType bx,
 	#pragma HLS array_partition variable=memoriesTEI complete
 	#pragma HLS array_partition variable=bendCutOverlapTable complete
 	#pragma HLS array_partition variable=memoriesOL complete
+	#pragma HLS array_partition variable=phiCorrTable
+	#pragma HLS array_partition variable=fineBinTable
+	#pragma HLS array_partition variable=rzBitsInnerTable
+	#pragma HLS array_partition variable=rzBitsOverlapTable
 	
 	VMRouterLoop<nPhiRegions-1>(bx,
+		// Lookup tables
+		fineBinTable,
+		phiCorrTable,
+		rzBitsInnerTable,
+		rzBitsOverlapTable,
+		bendCutInnerTable,
+		bendCutOverlapTable,
 		// Input memories
 		inputStub,
 		// Output memories
 		memoriesAS,
 		memoriesME,
-		bendCutInnerTable, memoriesTEI,
-		bendCutOverlapTable, memoriesOL);
+		memoriesTEI,
+		memoriesOL
+	);
 }
 	

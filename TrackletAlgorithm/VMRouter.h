@@ -61,7 +61,7 @@ constexpr int nbitsztabledisk = 3;
 constexpr int nbitsrtabledisk = 8;
 
 // Number of MSBs used for r index in phiCorr LUTs
-constexpr int nbitsrphitorrtable = 3; // Found hardcoded in VMRouterphiCorrTable.h
+constexpr int nbitsrphicorrtable = 3; // Found hardcoded in VMRouterphiCorrTable.h
 
 // Constants used for calculating which VM a stub belongs to
 constexpr int nbits_maxvmol = 4; // Overlap
@@ -155,15 +155,15 @@ template<regionType InType>
 inline typename AllStub<InType>::ASPHI getPhiCorr(
 		const typename AllStub<InType>::ASPHI phi,
 		const typename AllStub<InType>::ASR r,
-		const typename AllStub<InType>::ASBEND bend, const int phiCorrTable[]) {
+		const typename AllStub<InType>::ASBEND bend, const ap_int<10> phiCorrTable[]) {
 
 	if (InType == DISKPS || InType == DISK2S)
 		return phi; // Do nothing if disks
 
-	constexpr auto rBins = 1 << nbitsrphitorrtable; // The number of bins for r
+	constexpr auto rBins = 1 << nbitsrphicorrtable; // The number of bins for r
 
-	ap_uint<nbitsrphitorrtable> rBin = (r + (1 << (r.length() - 1)))
-			>> (r.length() - nbitsrphitorrtable); // Which bin r belongs to. Note r = 0 is mid radius
+	ap_uint<nbitsrphicorrtable> rBin = (r + (1 << (r.length() - 1)))
+			>> (r.length() - nbitsrphicorrtable); // Which bin r belongs to. Note r = 0 is mid radius
 	auto index = bend * rBins + rBin; // Index for where we find our correction value
 	auto corrValue = phiCorrTable[index]; // The amount we need to correct our phi
 
@@ -214,8 +214,8 @@ void clear3DArray(int dim1Length, ap_uint<nbits> array[][dim2Length][dim3Length]
 // Returns a ME stub with all the values set
 template<regionType InType, regionType OutType, int Layer, int Disk>
 inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
-		const int index, const bool negDisk, const int fineBinTable[],
-		const int phiCorrTable[], int& ivmPlus, int& ivmMinus, int& bin) {
+		const int index, const bool negDisk, const ap_uint<6> fineBinTable[],
+		const ap_int<10> phiCorrTable[], int& ivmPlus, int& ivmMinus, int& bin) {
 
 	// The MEStub that is going to be returned
 	VMStubME<OutType> stubME;
@@ -226,7 +226,7 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 	auto bend = stub.getBend();
 	auto phi = stub.getPhi();
 	auto phiCorr = getPhiCorr<InType>(phi, r, bend, phiCorrTable); // Corrected phi, i.e. phi at nominal radius (what about disks?)
-
+	
 	int nrBits = r.length(); // Number of bits for r
 	int nzBits = z.length(); // Number of bits for z
 	int nbendBits = bend.length(); // Number of bits for bend
@@ -316,8 +316,8 @@ inline VMStubME<OutType> createStubME(const InputStub<InType> stub,
 // Returns a TE Inner stub with all the values set
 template<regionType InType, regionType OutType, int Layer, int Disk>
 inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
-		const int index, const bool negDisk, const int rzbitsInnerTable[],
-		const int phiCorrTable[], int& ivm, int& rzbits) {
+		const int index, const bool negDisk, const ap_int<11> rzBitsInnerTable[],
+		const ap_int<10> phiCorrTable[], int& ivm, int& rzbits) {
 
 	// The TEInner Stub that is going to be returned
 	VMStubTEInner<OutType> stubTEI;
@@ -390,7 +390,7 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 
 	int rzbitsIndex = indexz * rbins + indexr; // Index for rzbits LUT
 
-	rzbits = rzbitsInnerTable[rzbitsIndex]; // The z/r information bits saved for TE Inner memories.
+	rzbits = rzBitsInnerTable[rzbitsIndex]; // The z/r information bits saved for TE Inner memories.
 
 	stubTEI.setZBits(rzbits);
 	stubTEI.setFinePhi(
@@ -403,8 +403,8 @@ inline VMStubTEInner<OutType> createStubTEInner(const InputStub<InType> stub,
 // Returns a TE Outer stub with all the values set
 template<regionType InType, regionType OutType, int Layer, int Disk>
 inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
-		const int index, const bool negDisk, const int rzbitsOuterTable[],
-		const int phiCorrTable[], int& ivm, int& bin) {
+		const int index, const bool negDisk, const ap_int<11> rzBitsOuterTable[],
+		const ap_int<10> phiCorrTable[], int& ivm, int& bin) {
 
 	// The TEOuter stub that is going to be returned
 	VMStubTEOuter<OutType> stubTEO;
@@ -482,7 +482,7 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 	// Find the VM bit information in rzbits LUT
 	// First 2/3 MSBs is the binning in r, and the 3 LSB is the fine r within a bin
 	ap_uint<nzbitsoutertable + nrbitsoutertable> rzbitsIndex = indexz * rbins + indexr; // Index for LUT
-	auto rzbits = rzbitsOuterTable[rzbitsIndex];
+	auto rzbits = rzBitsOuterTable[rzbitsIndex];
 
 	bin = rzbits >> nfinerzbits; // Remove the 3 LSBs, i.e. the finebin bits
 
@@ -501,8 +501,8 @@ inline VMStubTEOuter<OutType> createStubTEOuter(const InputStub<InType> stub,
 // Returns a TE Overlap stub with all the values set
 template<regionType InType, int Layer>
 inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
-		const int index, const int rzbitsOverlapTable[],
-		const int phiCorrTable[], int& ivm, int& rzbits) {
+		const int index, const ap_int<11> rzBitsOverlapTable[],
+		const ap_int<10> phiCorrTable[], int& ivm, int& rzbits) {
 
 	// The overlap stub that is going to be returned
 	VMStubTEInner<BARRELOL> stubOL;
@@ -543,7 +543,7 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 
 	ap_uint<nbitsztablelayer + nbitsrtablelayer> rzbitsIndex = zbin * rbins + rbin; // Index for rzbitsoverlaptable
 
-	rzbits = rzbitsOverlapTable[rzbitsIndex];
+	rzbits = rzBitsOverlapTable[rzbitsIndex];
 
 	stubOL.setBend(bend);
 	stubOL.setIndex(typename VMStubTEInner<BARRELOL>::VMSTEIID(index));
@@ -565,9 +565,9 @@ inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 // MAXCopies - The maximum number of copies of a memory type
 // NBitsBin number of bits used for the bins in MEMemories
 template<regionType InType, regionType OutType, char phiRegion, int Layer, int Disk, int MaxAllCopies, int MaxTEICopies, int MaxOLCopies, int MaxTEOCopies, int NBitsBin, int BendCutTableSize>
-void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[],
+void VMRouter(const BXType bx, const ap_uint<6> fineBinTable[], const ap_int<10> phiCorrTable[],
 		// rzbitstables, aka binlookup in emulation
-		const int rzbitsInnerTable[], const int rzbitsOverlapTable[], const int rzbitsOuterTable[],
+		const ap_int<11> rzBitsInnerTable[], const ap_int<11> rzBitsOverlapTable[], const ap_int<11> rzBitsOuterTable[],
 		// bendcut tables
 		const ap_uint<BendCutTableSize> bendCutInnerTable[], const ap_uint<BendCutTableSize> bendCutOverlapTable[], const ap_uint<BendCutTableSize> bendCutOuterTable[],
 		// Input memories
@@ -821,7 +821,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			int rzbits;
 
 			// Create the TE Inner stub to save
-			VMStubTEInner<OutType> stubTEI = createStubTEInner<InType, OutType, Layer, Disk>(stub, i, negDisk, rzbitsInnerTable, phiCorrTable, ivm, rzbits);
+			VMStubTEInner<OutType> stubTEI = createStubTEInner<InType, OutType, Layer, Disk>(stub, i, negDisk, rzBitsInnerTable, phiCorrTable, ivm, rzbits);
 
 // For debugging
 #ifndef __SYNTHESIS__
@@ -861,7 +861,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			int bin; // Coarse z. The bin the stub is going to be put in, in the memory
 
 			// Create the TE Outer stub to save
-			VMStubTEOuter<OutType> stubTEO = createStubTEOuter<InType, OutType, Layer, Disk>(stub, i, negDisk, rzbitsOuterTable, phiCorrTable, ivm, bin);
+			VMStubTEOuter<OutType> stubTEO = createStubTEOuter<InType, OutType, Layer, Disk>(stub, i, negDisk, rzBitsOuterTable, phiCorrTable, ivm, bin);
 
 // For debugging
 #ifndef __SYNTHESIS__
@@ -905,7 +905,7 @@ void VMRouter(const BXType bx, const int fineBinTable[], const int phiCorrTable[
 			int rzbits;
 
 			// Create the TE Inner Overlap stub to save
-			VMStubTEInner<BARRELOL> stubOL = createStubTEOverlap<InType, Layer>(stub, i, rzbitsOverlapTable, phiCorrTable, ivm, rzbits);
+			VMStubTEInner<BARRELOL> stubOL = createStubTEOverlap<InType, Layer>(stub, i, rzBitsOverlapTable, phiCorrTable, ivm, rzbits);
 
 // For debugging
 #ifndef __SYNTHESIS__
