@@ -503,48 +503,48 @@ template<regionType InType, int Layer>
 inline VMStubTEInner<BARRELOL> createStubTEOverlap(const InputStub<InType> stub,
 		const int index, const ap_int<11> rzBitsOverlapTable[],
 		const ap_int<10> phiCorrTable[], int& ivm, int& rzbits) {
-
+	
 	// The overlap stub that is going to be returned
 	VMStubTEInner<BARRELOL> stubOL;
-
+	
 	// Values from InputStub
 	auto z = stub.getZ();
 	auto r = stub.getR();
 	auto bend = stub.getBend();
 	auto phi = stub.getPhi();
 	auto phiCorr = getPhiCorr<InType>(phi, r, bend, phiCorrTable); // Corrected phi, i.e. phi at nominal radius (what about disks?)
-
+	
 	int nrBits = r.length(); // Number of bits for r
 	int nzBits = z.length(); // Number of bits for z
 	int nbendBits = bend.length(); // Number of bits for bend
-
+	
 	// Number of bits
 	constexpr auto nvmTotOL =
 			((Layer == 1) || (Layer == 2))  ? nallstubslayers[Layer - 1] * nvmollayers[Layer - 1] : 0; // Total number of VMs for Overlap in a whole sector
 	constexpr auto vmbits = ((Layer == 1) || (Layer == 2)) ? nbitsvmoverlap[Layer - 1] : 0; // Number of bits used for VMs
-	static const auto nFinePhiBits = stubOL.getFinePhi().length(); // Number of bits used for fine phi
-
+	const int nFinePhiBits = stubOL.getFinePhi().length(); // Number of bits used for fine phi. Won't synthesise with dataflow if static
+	
 	// Some sort of normalisation thing used for determining which VM the stub belongs to
 	static const ap_ufixed<nbits_maxvm, nbits_maxvmol-1> d_ol = nvmTotOL / maxvmolbins;
-
+	
 	// Set values to Overlap stub
-
+	
 	// 16 overlap vms per layer
 	auto iphiRawOl = iphivmRaw<InType>(phiCorr) >> 1; // Top 4 bits of phi
-
+	
 	ivm = iphiRawOl * d_ol; // Which VM it belongs to
-
+	
 	constexpr auto rbins = (1 << nbitsrtablelayer); // Number of bins in r
-
+	
 	ap_uint<nbitsztablelayer> zbin = (z + (1 << (nzBits- 1)))
 			>> (nzBits- nbitsztablelayer); // Make z positive and take the 7 MSBs
 	ap_uint<nbitsrtablelayer> rbin = (r + (1 << (nrBits- 1)))
 			>> (nrBits- nbitsrtablelayer);
-
+	
 	ap_uint<nbitsztablelayer + nbitsrtablelayer> rzbitsIndex = zbin * rbins + rbin; // Index for rzbitsoverlaptable
-
+	
 	rzbits = rzBitsOverlapTable[rzbitsIndex];
-
+	
 	stubOL.setBend(bend);
 	stubOL.setIndex(typename VMStubTEInner<BARRELOL>::VMSTEIID(index));
 	stubOL.setZBits(rzbits);

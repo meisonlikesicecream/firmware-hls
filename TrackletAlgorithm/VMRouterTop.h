@@ -25,7 +25,7 @@
 #define kDISK 0 // Which disk number the data is coming from, 0 if not disk
 
 constexpr unsigned int nPhiRegions = 2;
-constexpr char phiRegionList[nPhiRegions] = {'D', 'E'}; // Which AllStub/PhiRegion
+constexpr char phiRegionList[] = {'D', 'E'}; // Which AllStub/PhiRegion
 constexpr int sector = 4; //  Specifies the sector
 
 // Maximum number of memory "copies" for this Phi region

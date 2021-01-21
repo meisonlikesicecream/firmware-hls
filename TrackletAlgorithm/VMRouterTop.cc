@@ -34,13 +34,13 @@ void VMRouterLoop(BXType bx,
 	VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
 	VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]) {
 
-
+//#pragma HLS pipeline rewind
 	// Takes 2 clock cycles before on gets data, used at high frequencies
-	//#pragma HLS resource variable=inputStub[0].get_mem() latency=2
-	//#pragma HLS resource variable=inputStub[1].get_mem() latency=2
-	//#pragma HLS resource variable=inputStub[2].get_mem() latency=2
-	//#pragma HLS resource variable=inputStub[3].get_mem() latency=2
-
+	#pragma HLS resource variable=inputStub[N][0].get_mem() latency=2
+	#pragma HLS resource variable=inputStub[N][1].get_mem() latency=2
+	#pragma HLS resource variable=inputStub[N][2].get_mem() latency=2
+	#pragma HLS resource variable=inputStub[N][3].get_mem() latency=2
+//#pragma HLS inline
 	constexpr char phiRegion = phiRegionList[N];
 
 	VMRouterLoop<N-1>(bx,
@@ -103,11 +103,11 @@ void VMRouterLoop<0>(BXType bx,
 	VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies]) {
 
 	// Takes 2 clock cycles before on gets data, used at high frequencies
-	//#pragma HLS resource variable=inputStub[0].get_mem() latency=2
-	//#pragma HLS resource variable=inputStub[1].get_mem() latency=2
-	//#pragma HLS resource variable=inputStub[2].get_mem() latency=2
-	//#pragma HLS resource variable=inputStub[3].get_mem() latency=2
-
+	#pragma HLS resource variable=inputStub[0][0].get_mem() latency=2
+	#pragma HLS resource variable=inputStub[0][1].get_mem() latency=2
+	#pragma HLS resource variable=inputStub[0][2].get_mem() latency=2
+	#pragma HLS resource variable=inputStub[0][3].get_mem() latency=2
+//#pragma HLS inline
 		
 		constexpr char phiRegion = phiRegionList[0];
 
@@ -152,6 +152,7 @@ void SuperVMRouterTop(BXType bx,
 	const ap_uint<bendCutTableSize> bendCutInnerTable[nPhiRegions][nvmTEI*maxTEICopies], VMStubTEInnerMemory<outputType> memoriesTEI[nPhiRegions][nvmTEI][maxTEICopies],
 	const ap_uint<bendCutTableSize> bendCutOverlapTable[nPhiRegions][nvmOL*maxOLCopies], VMStubTEInnerMemory<BARRELOL> memoriesOL[nPhiRegions][nvmOL][maxOLCopies])
  {
+	#pragma HLS dataflow
 
 	#pragma HLS inline region recursive
 	#pragma HLS array_partition variable=inputStub complete
