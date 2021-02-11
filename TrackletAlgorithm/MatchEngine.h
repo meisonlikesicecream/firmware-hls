@@ -54,13 +54,18 @@
 				  + IS_REPRESENTIBLE_IN_D_BITS(32, N)    \
 				  )                                      \
 	  )
-#define LAYER 3
-//Options: BARREL and DISK
-#define PROJECTIONTYPE BARREL
+//Options: Layer 0 = endcap
+#define LAYER 0
+
 #if (LAYER >= 1) && (LAYER <= 3)
 	#define MODULETYPE BARRELPS
+	#define PROJECTIONTYPE BARREL
 #elif (LAYER >= 4) && (LAYER <= 6)
 	#define MODULETYPE BARREL2S
+	#define PROJECTIONTYPE BARREL
+#elif (LAYER == 0)
+	#define MODULETYPE DISK
+	#define PROJECTIONTYPE DISK
 #endif
 #if LAYER
   #define NBITBIN 3

@@ -64,6 +64,10 @@ int main() {
 	validvmproj    = false;
 	validvmstub    = false;
 	validcandmatch = false;
+#elif LAYER == 0
+	validvmproj    = openDataFile(fin_vmproj,"ME/ME_D1PHIA1/VMProjections_VMPROJ_D1PHIA1_04.dat");
+	validvmstub    = openDataFile(fin_vmstub,"ME/ME_D1PHIA1/VMStubs_VMSME_D1PHIA1n1_04.dat");
+	validcandmatch = openDataFile(fin_candmatch,"ME/ME_D1PHIA1/CandidateMatches_CM_D1PHIA1_04.dat");
 #endif
 	if (not validvmproj) return -1;
 	if (not validvmstub) return -2;

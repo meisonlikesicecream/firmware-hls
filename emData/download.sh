@@ -31,6 +31,7 @@ declare -a processing_modules=(
   "ME_L1PHIE20"
   "ME_L3PHIC20"
   "ME_L4PHIB12"
+  "ME_D1PHIA1"
 
   # MatchCalculator
   "MC_L1PHIC"
