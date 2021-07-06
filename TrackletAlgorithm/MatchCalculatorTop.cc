@@ -24,7 +24,7 @@ void MatchCalculatorTop(BXType bx,
   const auto LAYER  = TF::L3;
   const auto DISK   = TF::D1;
   const auto PHISEC = MC::C;
-  MC_L3PHIC: MatchCalculator<BARRELPS, BARRELPS, BARREL, maxMatchCopies, maxFullMatchCopies, LAYER, DISK, PHISEC>
+  MC_L3PHIC: MatchCalculator<MC::ASRegion<LAYER>(), MC::APRegion<LAYER>(), MC::FMRegion<LAYER>(), maxMatchCopies, maxFullMatchCopies, LAYER, DISK, PHISEC>
     (
       bx,
       match,
