@@ -103,7 +103,7 @@ int main() {
     BXType bx_out;
 
     // Unit Under Test
-    MatchCalculatorTop(
+    MatchCalculator_L3PHIC(
       bx, match, &allstub, &allproj, bx_out, fullmatch
     );
 
